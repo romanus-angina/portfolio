@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import Navbar from './Navbar';
-import Footer from './Footer';
-import ThreeBackground from './ThreeBackground';
+import { useEffect, useState } from 'react';
+import LargeSidebar from './LargeSidebar';
+import CursorGlow from './CursorGlow';
+import MetallicBackground from './MetallicBackground';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 
@@ -11,66 +11,93 @@ if (typeof window !== 'undefined') {
 }
 
 const Layout = ({ children }) => {
+  const [activeSection, setActiveSection] = useState('about');
+
   useEffect(() => {
-    // Initialize smooth scrolling
-    const smoothScroll = () => {
-      gsap.to(window, {
-        duration: 0.5,
-        scrollTo: { y: window.location.hash, offsetY: 100 },
-        ease: 'power2.inOut'
-      });
-    };
-
-    // Handle anchor links
-    const links = document.querySelectorAll('a[href^="#"]');
-    links.forEach(link => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        window.location.hash = link.getAttribute('href');
-        smoothScroll();
-      });
-    });
-
-    // Initialize section animations
-    const sections = document.querySelectorAll('section');
-    sections.forEach(section => {
-      gsap.fromTo(
-        section.querySelectorAll('.animate-in'),
-        { 
-          y: 50, 
-          opacity: 0 
-        },
-        { 
-          y: 0, 
-          opacity: 1, 
-          stagger: 0.1, 
-          duration: 0.8, 
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: section,
-            start: 'top 70%',
-            once: true
-          }
+    // Track active section on scroll
+    const sections = document.querySelectorAll('section[id]');
+    
+    const handleScroll = () => {
+      // Get current scroll position, with a slight offset to trigger earlier
+      const scrollPosition = window.scrollY + window.innerHeight / 3;
+      
+      // Find the section that's currently in view
+      let currentSection = '';
+      
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.offsetHeight;
+        
+        if (scrollPosition >= sectionTop && scrollPosition < (sectionTop + sectionHeight)) {
+          currentSection = section.getAttribute('id');
         }
-      );
-    });
-
-    return () => {
-      links.forEach(link => {
-        link.removeEventListener('click', smoothScroll);
       });
       
-      // Kill all scroll triggers to prevent memory leaks
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+      // Only update state if we have a valid section and it's different from current active section
+      if (currentSection && currentSection !== activeSection) {
+        setActiveSection(currentSection);
+      }
     };
-  }, []);
+    
+    // Set up initial active section
+    handleScroll();
+    
+    // Add scroll event listener
+    window.addEventListener('scroll', handleScroll);
+    
+    // Initialize smooth scrolling for navigation links
+    const handleLinkClick = (e) => {
+      const target = e.currentTarget;
+      
+      if (target.hash) {
+        e.preventDefault();
+        const targetElement = document.querySelector(target.hash);
+        
+        if (targetElement) {
+          // Get the target section ID
+          const sectionId = target.hash.replace('#', '');
+          
+          // Update active section
+          setActiveSection(sectionId);
+          
+          // Smooth scroll to the section
+          window.scrollTo({
+            top: targetElement.offsetTop,
+            behavior: 'smooth'
+          });
+        }
+      }
+    };
+    
+    // Add click event listeners to all navigation links
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+      link.addEventListener('click', handleLinkClick);
+    });
+    
+    // Clean up event listeners on component unmount
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      navLinks.forEach(link => {
+        link.removeEventListener('click', handleLinkClick);
+      });
+    };
+  }, [activeSection]);
 
   return (
-    <div className="layout">
-      <ThreeBackground />
-      <Navbar />
-      <main>{children}</main>
-      <Footer />
+    <div className="layout modern-layout">
+      {/* Use the metallic background instead of SimpleBackground */}
+      <MetallicBackground />
+      
+      {/* Add CursorGlow for the glowing cursor effect */}
+      <CursorGlow />
+      
+      <div className="content-container">
+        <LargeSidebar activeSection={activeSection} />
+        <main className="main-content">
+          {children}
+        </main>
+      </div>
     </div>
   );
 };

@@ -7,7 +7,7 @@ const Footer = () => {
         <div className="footer-content">
           <div className="footer-section">
             <h3>Get In Touch</h3>
-            <p>Feel free to reach withb any opportunities or just a friendly hello!</p>
+            <p>Feel free to reach with any opportunities or just a friendly hello!</p>
             <a href="mailto:sra12@rice.edu" className="contact-link">
               <FaEnvelope /> sra12@rice.edu
             </a>
