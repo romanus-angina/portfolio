@@ -59,13 +59,14 @@ const Hero = () => {
     <section ref={heroRef} id="about" className="hero-section">
       <div className="hero-container">
         <div ref={imageRef} className="profile-image-container">
-          <Image 
-            src="/images/profile.jpg" 
-            alt="Romanus Ang'ina" 
-            width={250} 
-            height={250} 
-            className="profile-image" 
-          />
+        <Image 
+          src="/images/profile.jpg" 
+          alt="Your Name" 
+          width={250} 
+          height={250} 
+          className="profile-image"
+          priority
+        />
         </div>
         
         <div ref={contentRef} className="hero-content">
