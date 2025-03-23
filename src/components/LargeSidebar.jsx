@@ -78,7 +78,7 @@ const LargeSidebar = ({ activeSection }) => {
                 <h1 ref={nameRef} className="name">Romanus<br/>Ang'ina</h1>
                 <h2 ref={titleRef} className="title">Electrical and Computer Engineering Student</h2>
                 <p ref={descriptionRef} className="description">
-                  I learn and build interesting things.
+                  I learn by building interesting things.
                 </p>
               </div>
               <div className="point-cloud-wrapper">
