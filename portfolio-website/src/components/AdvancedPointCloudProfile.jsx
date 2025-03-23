@@ -1,350 +1,732 @@
-import { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
+import React, { useEffect, useRef, useState } from 'react';
+import { gsap } from 'gsap';
 
 const AdvancedPointCloudProfile = () => {
-  const containerRef = useRef(null);
-  const [isInitialized, setIsInitialized] = useState(false);
+  // Component state
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [status, setStatus] = useState("Initializing...");
+  const [isClient, setIsClient] = useState(false);
+  const mousePosition = useRef({ x: 0, y: 0, worldX: 0, worldY: 0 });
+  const isMouseInside = useRef(false);
   
+  // Refs for Three.js objects
+  const containerRef = useRef(null);
+  const rendererRef = useRef(null);
+  const sceneRef = useRef(null);
+  const cameraRef = useRef(null);
+  const pointCloudRef = useRef(null);
+  const animationRef = useRef(null);
+  
+  // Set isClient to true when component mounts
   useEffect(() => {
-    if (!containerRef.current || isInitialized) return;
+    setIsClient(true);
+  }, []);
+  
+  // Initialize Three.js scene
+  useEffect(() => {
+    if (!isClient || !containerRef.current) return;
     
-    // Log to help with debugging
-    console.log("Initializing point cloud...");
+    console.log("Initializing point cloud profile...");
+    setStatus("Setting up Three.js...");
     
-    let scene, camera, renderer, pointCloud;
-    let animationFrameId;
-    let mouseX = 0, mouseY = 0;
-    
-    const init = () => {
+    const init = async () => {
       try {
+        // Dynamically import Three.js
+        const THREE = await import('three');
+        
         // Create scene
-        scene = new THREE.Scene();
+        const scene = new THREE.Scene();
+        sceneRef.current = scene;
+        scene.background = new THREE.Color(0x1e1e24);
         
-        // Create camera - using perspective for more depth
-        camera = new THREE.PerspectiveCamera(
-          50, 
-          1, // Square aspect ratio
-          0.1, 
-          1000
-        );
-        camera.position.z = 200;
+        // Create camera
+        const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 1000);
+        cameraRef.current = camera;
+        camera.position.z = 30;
         
-        // Create renderer with explicit pixel ratio
-        renderer = new THREE.WebGLRenderer({
-          alpha: true,
+        // Create renderer
+        const renderer = new THREE.WebGLRenderer({
           antialias: true,
+          alpha: true,
           powerPreference: 'high-performance'
         });
-        
-        // Set pixel ratio and size
+        rendererRef.current = renderer;
         renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.setSize(400, 400);
-        renderer.setClearColor(0x000000, 0); // Transparent background
+        renderer.setSize(300, 300);
+        renderer.setClearColor(0x000000, 0);
         
-        // Append renderer to container
-        if (containerRef.current) {
-          console.log("Appending renderer to container");
-          
-          // Clear container first
-          while (containerRef.current.firstChild) {
-            containerRef.current.removeChild(containerRef.current.firstChild);
-          }
-          
-          containerRef.current.appendChild(renderer.domElement);
-        } else {
-          throw new Error("Container ref is not available");
-        }
+        // Clear container and add renderer
+        containerRef.current.innerHTML = '';
+        containerRef.current.appendChild(renderer.domElement);
         
-        // Skip image loading and directly create a monochrome pattern
-        createMonochromePointCloud();
+        // Create a simple cube grid as a fallback
+        createSimpleGrid(THREE);
         
-        // Add event listeners
-        document.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('resize', onWindowResize);
+        // Add event listeners for mouse movement
+        containerRef.current.addEventListener('mousemove', handleMouseMove);
+        containerRef.current.addEventListener('mouseenter', () => { isMouseInside.current = true; });
+        containerRef.current.addEventListener('mouseleave', () => { 
+          isMouseInside.current = false; 
+          resetAllParticles();
+        });
         
         // Start animation
         animate();
-        setIsInitialized(true);
-        console.log("Point cloud initialized successfully");
+        
+        // Try loading the profile image
+        loadProfileImage(THREE);
       } catch (err) {
-        console.error("Error initializing point cloud:", err);
-        setError(err.message);
+        console.error("Error initializing Three.js:", err);
+        setError(`Initialization error: ${err.message}`);
+        setLoading(false);
       }
     };
     
-    const createMonochromePointCloud = () => {
-      console.log("Creating monochrome point cloud pattern");
-      try {
-        // Create a spiral pattern
-        const positions = [];
-        const colors = [];
-        const sizes = [];
-        
-        const particleCount = 15000;
-        const radius = 100;
-        
-        for (let i = 0; i < particleCount; i++) {
-          // Create a spiral pattern
-          const progress = i / particleCount;
-          const angle = progress * Math.PI * 20;
-          const radiusFactor = progress * radius;
-          
-          // Create a flowing pattern with sine wave variations
-          const variation = Math.sin(angle * 2) * 10;
-          const x = Math.cos(angle) * (radiusFactor + variation);
-          const y = Math.sin(angle) * (radiusFactor + variation);
-          const z = (Math.random() - 0.5) * 20;
-          
-          positions.push(x, y, z);
-          
-          // White color with slight variations
-          const brightness = 0.6 + Math.random() * 0.4;
-          colors.push(
-            brightness,
-            brightness,
-            brightness
-          );
-          
-          // Vary size
-          sizes.push(1.5 + Math.random());
-        }
-        
-        createPointCloudFromArrays(positions, colors, sizes);
-      } catch (err) {
-        console.error("Error creating monochrome point cloud:", err);
-        setError(err.message);
-      }
-    };
-    
-    const createPointCloudFromArrays = (positions, colors, sizes) => {
-      try {
-        // Create geometry and set attributes
-        const geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-        geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
-        
-        // Create shader material for points
-        const material = new THREE.ShaderMaterial({
-          uniforms: {
-            time: { value: 0 },
-            pointTexture: { value: createPointTexture() },
-            mousePosition: { value: new THREE.Vector2(0, 0) }
-          },
-          vertexShader: `
-            attribute float size;
-            varying vec3 vColor;
-            uniform float time;
-            uniform vec2 mousePosition;
-            
-            void main() {
-              vColor = color;
-              
-              // Get base position
-              vec3 pos = position;
-              
-              // Add subtle wave motion based on position and time
-              float waveX = sin(position.x * 0.05 + time * 0.5) * 1.5;
-              float waveY = cos(position.y * 0.05 + time * 0.3) * 1.5;
-              float waveZ = sin(position.z * 0.05 + time * 0.7) * 3.0;
-              
-              // Mouse interaction - particles move away from mouse 
-              float distToMouse = length(mousePosition - vec2(pos.x, pos.y));
-              float mouseEffect = 10.0 * exp(-distToMouse * 0.01); // Exponential falloff
-              float mouseFactor = clamp(mouseEffect, 0.0, 20.0);
-              
-              // Direction from mouse
-              vec2 direction = normalize(vec2(pos.x, pos.y) - mousePosition);
-              
-              // Apply mouse effect only for points close to mouse
-              if (distToMouse < 50.0) {
-                pos.x += direction.x * mouseFactor;
-                pos.y += direction.y * mouseFactor;
-              }
-              
-              // Apply wave motion
-              pos.x += waveX;
-              pos.y += waveY;
-              pos.z += waveZ;
-              
-              // Calculate final position 
-              vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-              gl_PointSize = size * (50.0 / -mvPosition.z);
-              gl_Position = projectionMatrix * mvPosition;
-            }
-          `,
-          fragmentShader: `
-            uniform sampler2D pointTexture;
-            varying vec3 vColor;
-            
-            void main() {
-              // Get particle texture 
-              vec4 texColor = texture2D(pointTexture, gl_PointCoord);
-              
-              // Discard transparent pixels
-              if (texColor.a < 0.1) discard;
-              
-              // Final color with soft glow effect 
-              gl_FragColor = vec4(vColor, texColor.a * 0.8);
-            }
-          `,
-          transparent: true,
-          depthWrite: false,
-          blending: THREE.AdditiveBlending,
-          vertexColors: true
-        });
-        
-        // Create the particle system
-        pointCloud = new THREE.Points(geometry, material);
-        scene.add(pointCloud);
-        
-        console.log("Point cloud created successfully");
-      } catch (err) {
-        console.error("Error creating point cloud from arrays:", err);
-        setError(err.message);
-      }
-    };
-    
-    // Create a soft circular texture for points
-    const createPointTexture = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 32;
-      canvas.height = 32;
-      
-      const context = canvas.getContext('2d');
-      const gradient = context.createRadialGradient(
-        canvas.width / 2, canvas.height / 2, 0,
-        canvas.width / 2, canvas.height / 2, canvas.width / 2
-      );
-      
-      gradient.addColorStop(0, 'rgba(255,255,255,1)');
-      gradient.addColorStop(0.5, 'rgba(255,255,255,0.5)');
-      gradient.addColorStop(1, 'rgba(255,255,255,0)');
-      
-      context.fillStyle = gradient;
-      context.fillRect(0, 0, canvas.width, canvas.height);
-      
-      const texture = new THREE.CanvasTexture(canvas);
-      texture.needsUpdate = true;
-      return texture;
-    };
-    
-    // Mouse move handler
-    const onMouseMove = (event) => {
-      if (!containerRef.current) return;
-      
-      // Get container bounds
-      const rect = containerRef.current.getBoundingClientRect();
-      
-      // Calculate mouse position relative to the center of the container
-      mouseX = ((event.clientX - rect.left) - rect.width / 2);
-      mouseY = (-(event.clientY - rect.top) + rect.height / 2);
-      
-      // Update shader uniform
-      if (pointCloud && pointCloud.material.uniforms) {
-        pointCloud.material.uniforms.mousePosition.value.set(mouseX, mouseY);
-      }
-    };
-    
-    // Handle window resize
-    const onWindowResize = () => {
-      if (renderer && containerRef.current) {
-        const width = containerRef.current.clientWidth;
-        const height = containerRef.current.clientHeight;
-        
-        if (width && height) {
-          renderer.setSize(width, height);
-          if (camera) {
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
-          }
-        }
-      }
-    };
-    
-    // Animation loop
-    const animate = () => {
-      animationFrameId = requestAnimationFrame(animate);
-      
-      // Update time uniform for shader animation
-      if (pointCloud && pointCloud.material.uniforms) {
-        pointCloud.material.uniforms.time.value += 0.01;
-      }
-      
-      // Slowly rotate point cloud
-      if (pointCloud) {
-        pointCloud.rotation.y += 0.001;
-      }
-      
-      // Render the scene
-      if (renderer && scene && camera) {
-        renderer.render(scene, camera);
-      }
-    };
-    
-    // Initialize
+    // Start initialization
     init();
     
     // Cleanup function
     return () => {
       console.log("Cleaning up point cloud resources");
-      window.removeEventListener('resize', onWindowResize);
-      document.removeEventListener('mousemove', onMouseMove);
-      cancelAnimationFrame(animationFrameId);
       
-      if (containerRef.current && renderer && renderer.domElement) {
-        containerRef.current.removeChild(renderer.domElement);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
       }
       
-      if (pointCloud) {
-        if (pointCloud.geometry) pointCloud.geometry.dispose();
-        if (pointCloud.material) {
-          if (pointCloud.material.uniforms && pointCloud.material.uniforms.pointTexture) {
-            pointCloud.material.uniforms.pointTexture.value.dispose();
+      if (containerRef.current) {
+        containerRef.current.removeEventListener('mousemove', handleMouseMove);
+        containerRef.current.removeEventListener('mouseenter', () => { isMouseInside.current = true; });
+        containerRef.current.removeEventListener('mouseleave', () => { isMouseInside.current = false; });
+        
+        if (rendererRef.current && rendererRef.current.domElement) {
+          try {
+            containerRef.current.removeChild(rendererRef.current.domElement);
+          } catch (e) {
+            console.log("Error removing renderer from DOM:", e);
           }
-          pointCloud.material.dispose();
         }
       }
       
-      if (renderer) renderer.dispose();
+      // Dispose Three.js resources
+      try {
+        if (pointCloudRef.current) {
+          if (pointCloudRef.current.children) {
+            pointCloudRef.current.children.forEach(child => {
+              if (child.geometry) child.geometry.dispose();
+              if (child.material) child.material.dispose();
+            });
+          }
+          
+          if (pointCloudRef.current.geometry) {
+            pointCloudRef.current.geometry.dispose();
+          }
+          
+          if (pointCloudRef.current.material) {
+            pointCloudRef.current.material.dispose();
+          }
+        }
+        
+        if (rendererRef.current) {
+          rendererRef.current.dispose();
+        }
+      } catch (err) {
+        console.error("Error during cleanup:", err);
+      }
     };
-  }, [isInitialized]);
+  }, [isClient]);
+
+  // Reset all particles to their original positions
+  const resetAllParticles = () => {
+    if (!pointCloudRef.current || !pointCloudRef.current.children) return;
+    
+    const particles = pointCloudRef.current.children;
+    
+    for (let i = 0; i < particles.length; i++) {
+      const particle = particles[i];
+      if (!particle || !particle.userData || !particle.position) continue;
+      
+      gsap.to(particle.position, {
+        x: particle.userData.originalX,
+        y: particle.userData.originalY,
+        z: particle.userData.originalZ,
+        duration: 0.5,
+        ease: "power2.out"
+      });
+    }
+  };
   
+  // Create a simple colored grid of cubes with circular shape
+  const createSimpleGrid = (THREE) => {
+    try {
+      // Create a group to hold all cubes
+      const group = new THREE.Group();
+      pointCloudRef.current = group;
+      
+      // Number of rings and particles per ring
+      const numRings = 10;
+      const particlesPerRing = 40;
+      
+      // Create small cubes in a circular pattern
+      for (let ring = 0; ring < numRings; ring++) {
+        const radius = (ring + 1) * 1.5;
+        
+        for (let i = 0; i < particlesPerRing; i++) {
+          const angle = (i / particlesPerRing) * Math.PI * 2;
+          
+          // Calculate position
+          const posX = Math.cos(angle) * radius;
+          const posY = Math.sin(angle) * radius;
+          const posZ = 0;
+          
+          // Create a small cube
+          const geometry = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+          
+          // Different color for each cube based on position
+          const hue = (ring / numRings);
+          const saturation = 0.7;
+          const lightness = 0.5 + (i / particlesPerRing) * 0.3;
+          
+          const material = new THREE.MeshBasicMaterial({
+            color: new THREE.Color().setHSL(hue, saturation, lightness)
+          });
+          
+          const cube = new THREE.Mesh(geometry, material);
+          cube.position.set(posX, posY, posZ);
+          
+          // Store original position for animation
+          cube.userData.originalX = posX;
+          cube.userData.originalY = posY;
+          cube.userData.originalZ = posZ;
+          
+          // Store the column index for entrance animation
+          cube.userData.columnIndex = Math.floor((posX + 15) / 1.5);
+          
+          // Move off screen to the right for entrance animation
+          cube.position.x += 30;
+          
+          // Add to group
+          group.add(cube);
+        }
+      }
+      
+      // Add group to scene
+      sceneRef.current.add(group);
+      
+      // Animate entrance by columns
+      animateByColumns(group.children);
+      
+      console.log("Created circular grid with", group.children.length, "cubes");
+    } catch (err) {
+      console.error("Error creating grid:", err);
+      setError(`Grid creation error: ${err.message}`);
+    }
+  };
+  
+  // Animate entrance by columns
+  const animateByColumns = (particles) => {
+    if (!particles || particles.length === 0) return;
+    
+    // Find the range of column indices
+    let minColumnIndex = Infinity;
+    let maxColumnIndex = -Infinity;
+    
+    particles.forEach(particle => {
+      if (particle.userData && particle.userData.columnIndex !== undefined) {
+        minColumnIndex = Math.min(minColumnIndex, particle.userData.columnIndex);
+        maxColumnIndex = Math.max(maxColumnIndex, particle.userData.columnIndex);
+      }
+    });
+    
+    const numColumns = maxColumnIndex - minColumnIndex + 1;
+    console.log(`Animating ${numColumns} columns`);
+    
+    // Animate each column with delay
+    for (let col = 0; col <= numColumns; col++) {
+      const columnIndex = maxColumnIndex - col; // Right to left
+      const columnDelay = col * 0.05; // 50ms delay between columns
+      
+      // Find particles in this column
+      const columnParticles = particles.filter(
+        p => p.userData && p.userData.columnIndex === columnIndex
+      );
+      
+      // Animate the particles in this column
+      gsap.to(
+        columnParticles.map(p => p.position),
+        {
+          x: (i, target) => columnParticles[i].userData.originalX,
+          duration: 0.8,
+          delay: columnDelay,
+          ease: "power2.out",
+          overwrite: true
+        }
+      );
+    }
+  };
+  
+  // Load profile image
+  const loadProfileImage = (THREE) => {
+    setStatus("Loading profile image...");
+    
+    try {
+      const img = new Image();
+      img.crossOrigin = "Anonymous";
+      
+      img.onload = () => {
+        setStatus(`Image loaded: ${img.width}x${img.height}`);
+        
+        try {
+          // Create canvas to process image
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          
+          if (!context) {
+            console.warn("Could not get 2D context for canvas");
+            setLoading(false);
+            return;
+          }
+          
+          canvas.width = img.width;
+          canvas.height = img.height;
+          context.drawImage(img, 0, 0);
+          
+          // Get image data
+          const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          
+          // Create point cloud from image
+          createPointCloudFromImage(THREE, imageData, canvas.width, canvas.height);
+          
+          // Hide loading indicator
+          setLoading(false);
+        } catch (err) {
+          console.error("Error processing image:", err);
+          setStatus("Using fallback grid (image processing failed)");
+          setLoading(false);
+        }
+      };
+      
+      img.onerror = () => {
+        console.error("Error loading profile image - file not found or inaccessible");
+        setStatus("Using fallback grid (image not found)");
+        setLoading(false);
+      };
+      
+      // Try different paths for the image
+      const imagePaths = [
+        "/images/profile.jpg",
+        "/profile.jpg",
+        "../public/images/profile.jpg",
+        "images/profile.jpg"
+      ];
+      
+      // Try the first path
+      console.log("Attempting to load image from:", imagePaths[0]);
+      img.src = imagePaths[0];
+      
+      // If that fails, try the next paths
+      let pathIndex = 1;
+      img.addEventListener('error', () => {
+        if (pathIndex < imagePaths.length) {
+          console.log("Retrying with path:", imagePaths[pathIndex]);
+          img.src = imagePaths[pathIndex];
+          pathIndex++;
+        }
+      });
+    } catch (err) {
+      console.error("Error setting up image load:", err);
+      setStatus("Using fallback grid (image setup failed)");
+      setLoading(false);
+    }
+  };
+  
+  // Create point cloud from image data in a circular shape
+  const createPointCloudFromImage = (THREE, imageData, width, height) => {
+    try {
+      setStatus("Creating image particles...");
+      
+      // If we already have a point cloud, remove it
+      if (pointCloudRef.current) {
+        sceneRef.current.remove(pointCloudRef.current);
+      }
+      
+      // Create a new group to hold particles
+      const group = new THREE.Group();
+      pointCloudRef.current = group;
+      
+      // Center the point cloud
+      const halfWidth = width / 2;
+      const halfHeight = height / 2;
+      
+      // Max radius of the circle
+      const maxRadius = Math.min(width, height) / 2;
+      
+      // Use spheres instead of point clouds to avoid the Matrix3 error
+      const particleGeometry = new THREE.SphereGeometry(0.15, 4, 4);
+      
+      // Process image pixels in a circular pattern
+      let particleCount = 0;
+      const maxParticles = 10000; // Limit to avoid performance issues
+      const sampleRate = 5; // Sample every nth pixel
+      
+      // Organize particles by columns for entrance animation
+      const columnParticles = {};
+      const columnWidth = 1.5; // Width of each column
+      
+      // Center hole dimensions (skip these pixels to remove black dot in center)
+      const centerHoleRadius = maxRadius * 0.075; // Size of the hole in the center
+      
+      // Loop through the image in a circular pattern
+      for (let radius = centerHoleRadius; radius < maxRadius; radius += sampleRate/2) {
+        // More points for outer rings, fewer for inner
+        const pointsInThisRing = Math.floor(2 * Math.PI * radius / sampleRate);
+        
+        // Skip if we don't have at least 8 points in this ring
+        if (pointsInThisRing < 8) continue;
+        
+        // Create particles in a ring
+        for (let i = 0; i < pointsInThisRing; i++) {
+          if (particleCount >= maxParticles) break;
+          
+          // Calculate angle and position in the image
+          const angle = (i / pointsInThisRing) * Math.PI * 2;
+          const imgX = Math.floor(halfWidth + radius * Math.cos(angle));
+          const imgY = Math.floor(halfHeight + radius * Math.sin(angle));
+          
+          // Check if position is inside the image
+          if (imgX >= 0 && imgX < width && imgY >= 0 && imgY < height) {
+            // Get pixel data
+            const i = (imgY * width + imgX) * 4;
+            
+            // Get color values
+            const r = imageData.data[i] / 255;
+            const g = imageData.data[i + 1] / 255;
+            const b = imageData.data[i + 2] / 255;
+            const a = imageData.data[i + 3] / 255;
+            
+            // Skip transparent or very dark pixels
+            const brightness = (r + g + b) / 3;
+            if (a < 0.5 || brightness < 0.1) continue;
+            
+            // Scale for the scene
+            const scaleFactor = 15;
+            const posX = (radius * Math.cos(angle)) / scaleFactor;
+            // Flip Y axis to correct the orientation
+            const posY = -(radius * Math.sin(angle)) / scaleFactor;
+            // Use depth based on brightness for 2.5D effect - brighter points come forward
+            const posZ = brightness * 3;
+            
+            // Create material with the pixel color
+            const material = new THREE.MeshBasicMaterial({
+              color: new THREE.Color(r, g, b)
+            });
+            
+            // Create the particle
+            const particle = new THREE.Mesh(particleGeometry, material);
+            
+            // Position particle at original position
+            particle.position.set(posX, posY, posZ);
+            
+            // Store original position for animation
+            particle.userData.originalX = posX;
+            particle.userData.originalY = posY;
+            particle.userData.originalZ = posZ;
+            
+            // Determine column index for entrance animation
+            const columnIndex = Math.floor((posX + 15) / columnWidth);
+            particle.userData.columnIndex = columnIndex;
+            
+            // Move off screen to the right for entrance animation
+            particle.position.x += 30;
+            
+            // Group by column for animation
+            if (!columnParticles[columnIndex]) {
+              columnParticles[columnIndex] = [];
+            }
+            columnParticles[columnIndex].push(particle);
+            
+            // Add to scene
+            group.add(particle);
+            particleCount++;
+          }
+        }
+      }
+      
+      // Add group to scene
+      sceneRef.current.add(group);
+      
+      // Tilt the group slightly to enhance 2.5D effect without affecting cursor interaction
+      group.rotation.x = -0.15; // Tilt forward slightly
+      
+      // Animate entrance by columns
+      animateByColumns(group.children);
+      
+      console.log(`Created circular image point cloud with ${particleCount} particles in ${Object.keys(columnParticles).length} columns`);
+      setStatus("Rendering point cloud");
+    } catch (err) {
+      console.error("Error creating point cloud from image:", err);
+      setStatus("Using fallback grid (point cloud creation failed)");
+    }
+  };
+  
+  // Handle mouse movement for cursor-flow interaction
+  const handleMouseMove = (event) => {
+    if (!containerRef.current) return;
+    
+    try {
+      const rect = containerRef.current.getBoundingClientRect();
+      
+      // Calculate normalized mouse position (-1 to 1)
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      
+      // Calculate world coordinates (scaled to match our scene)
+      const worldX = x * 15;
+      const worldY = y * 15;
+      
+      // Update mouse position
+      mousePosition.current = { x, y, worldX, worldY };
+    } catch (err) {
+      console.error("Mouse movement error:", err);
+    }
+  };
+  
+  // Animation loop
+  const animate = () => {
+    if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
+    
+    try {
+      animationRef.current = requestAnimationFrame(animate);
+      
+      // Apply cursor flow effect to particles
+      if (pointCloudRef.current && pointCloudRef.current.children) {
+        const particles = pointCloudRef.current.children;
+        
+        if (isMouseInside.current) {
+          const mouseX = mousePosition.current.worldX;
+          const mouseY = mousePosition.current.worldY;
+          
+          // Parameters for cursor flow effect - smaller influence radius
+          const influenceRadius = 0.375; // Radius of influence
+          const pushStrength = 2.5; // How strongly particles are pushed
+          
+          // Apply effect to particles
+          for (let i = 0; i < particles.length; i++) {
+            const particle = particles[i];
+            if (!particle || !particle.userData || !particle.position) continue;
+            
+            // Get original position
+            const origX = particle.userData.originalX;
+            const origY = particle.userData.originalY;
+            
+            // Calculate distance to cursor
+            const dx = origX - mouseX;
+            const dy = origY - mouseY;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            // Only affect particles within influence radius
+            if (distance < influenceRadius) {
+              // Calculate influence factor (stronger effect closer to mouse)
+              const influence = 1 - (distance / influenceRadius);
+              
+              // Repulsion direction (away from cursor)
+              const angle = Math.atan2(dy, dx);
+              
+              // Push particles away from cursor
+              const pushX = Math.cos(angle) * pushStrength * influence;
+              const pushY = Math.sin(angle) * pushStrength * influence;
+              
+              // Apply movement directly
+              particle.position.x = origX + pushX;
+              particle.position.y = origY + pushY;
+            } else {
+              // Return particles to original position if not affected
+              // but only if they're more than a small threshold away
+              const currentX = particle.position.x;
+              const currentY = particle.position.y;
+              const returnThreshold = 0.05;
+              
+              if (Math.abs(currentX - origX) > returnThreshold || 
+                  Math.abs(currentY - origY) > returnThreshold) {
+                // Move 20% back toward original position each frame
+                particle.position.x += (origX - currentX) * 0.2;
+                particle.position.y += (origY - currentY) * 0.2;
+              }
+            }
+          }
+        } else {
+          // When mouse isn't inside, gradually return all particles to original positions
+          for (let i = 0; i < particles.length; i++) {
+            const particle = particles[i];
+            if (!particle || !particle.userData || !particle.position) continue;
+            
+            const origX = particle.userData.originalX;
+            const origY = particle.userData.originalY;
+            const currentX = particle.position.x;
+            const currentY = particle.position.y;
+            
+            // Check if particle isn't already at original position
+            if (Math.abs(currentX - origX) > 0.01 || Math.abs(currentY - origY) > 0.01) {
+              // Move 10% back toward original position each frame
+              particle.position.x += (origX - currentX) * 0.1;
+              particle.position.y += (origY - currentY) * 0.1;
+            }
+          }
+        }
+      }
+      
+      // Add subtle continuous rotation to the whole group
+      if (pointCloudRef.current) {
+        // Very slight rotation to maintain slight movement without compromising cursor interaction
+        pointCloudRef.current.rotation.y += 0.0002;
+      }
+      
+      // Render the scene
+      rendererRef.current.render(sceneRef.current, cameraRef.current);
+    } catch (err) {
+      console.error("Animation error:", err);
+      cancelAnimationFrame(animationRef.current);
+    }
+  };
+
   return (
     <div className="point-cloud-wrapper">
-      {error && (
-        <div className="point-cloud-error">
-          Error loading point cloud: {error}
+      {loading && (
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <div className="loading-indicator">
+            {status}
+          </div>
         </div>
       )}
-      <div 
-        ref={containerRef} 
-        className="point-cloud-container" 
-        style={{ 
-          width: '400px', 
-          height: '400px',
-          margin: '0 auto',
-          position: 'relative',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          border: error ? '1px solid #ffffff' : 'none'
-        }}
-      />
+      
+      {error && (
+        <div className="error-message">
+          <span className="error-icon">⚠️</span> {error}
+        </div>
+      )}
+      
+      <div className="profile-container">
+        <div 
+          ref={containerRef} 
+          className={`point-cloud-container ${loading ? 'loading' : ''}`}
+          style={{
+            width: '300px',
+            height: '300px',
+            margin: '0 auto',
+            borderRadius: '50%', // Make container circular
+            overflow: 'hidden',
+            position: 'relative',
+            background: 'rgba(30, 30, 36, 0.5)',
+            zIndex: 1,
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+            transition: 'opacity 0.5s ease, transform 0.5s ease'
+          }}
+        />
+        
+        <div className="profile-caption">
+          <span className="caption-highlight">✧</span> Interactive Point Cloud <span className="caption-highlight">✧</span>
+        </div>
+      </div>
+
       <style jsx>{`
         .point-cloud-wrapper {
           width: 100%;
           display: flex;
           flex-direction: column;
           align-items: center;
+          margin: 2rem 0;
         }
         
-        .point-cloud-error {
+        .profile-container {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+        }
+        
+        .loading-container {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          z-index: 10;
+          background-color: rgba(30, 30, 36, 0.7);
+          backdrop-filter: blur(4px);
+          border-radius: 50%; /* Match container shape */
+        }
+        
+        .loading-spinner {
+          width: 40px;
+          height: 40px;
+          border: 3px solid rgba(255, 255, 255, 0.1);
+          border-radius: 50%;
+          border-top-color: #ffffff;
+          animation: spin 1s ease-in-out infinite;
+          margin-bottom: 1rem;
+        }
+        
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        
+        .loading-indicator {
           color: #ffffff;
-          margin-bottom: 10px;
-          font-size: 14px;
-          font-family: monospace;
+          font-family: 'SF Mono', 'Fira Code', monospace;
+          font-size: 0.85rem;
+        }
+        
+        .error-message {
+          color: #ff6b6b;
+          font-family: 'SF Mono', 'Fira Code', monospace;
+          font-size: 0.85rem;
+          margin-bottom: 1rem;
+          padding: 0.75rem 1rem;
+          background-color: rgba(255, 107, 107, 0.1);
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+        }
+        
+        .error-icon {
+          margin-right: 0.5rem;
+        }
+        
+        .point-cloud-container {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        
+        .point-cloud-container.loading {
+          opacity: 0.5;
+          transform: translateY(10px);
+        }
+        
+        .profile-caption {
+          font-family: 'SF Mono', 'Fira Code', monospace;
+          font-size: 0.85rem;
+          color: #b3b3b3;
+          margin-top: 1.25rem;
+          text-align: center;
+          letter-spacing: 0.5px;
+        }
+        
+        .caption-highlight {
+          color: #ffffff;
+          margin: 0 0.25rem;
+        }
+        
+        @media (max-width: 768px) {
+          .point-cloud-container {
+            width: 250px !important;
+            height: 250px !important;
+          }
         }
       `}</style>
     </div>

@@ -40,7 +40,11 @@ const AboutSection = () => {
             </div>
           </div>
           
-          
+          <div className="profile-container animate-in">
+            <div className="point-cloud-wrapper">
+              <AdvancedPointCloudProfile />
+            </div>
+          </div>
         </div>
       </div>
       
@@ -63,6 +67,7 @@ const AboutSection = () => {
           flex-direction: column;
           align-items: center;
           justify-content: center;
+          transition: transform 0.5s ease;
         }
         
         .point-cloud-wrapper {
@@ -70,14 +75,6 @@ const AboutSection = () => {
           display: flex;
           flex-direction: column;
           align-items: center;
-        }
-        
-        .profile-caption {
-          font-family: 'SF Mono', 'Fira Code', monospace;
-          font-size: 0.9rem;
-          color: #64ffda;
-          text-align: center;
-          margin-top: 1rem;
         }
         
         @media (max-width: 1100px) {
