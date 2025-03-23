@@ -137,7 +137,7 @@ const LargeSidebar = ({ activeSection }) => {
               <FaFileAlt size={20} />
             </a>
             <a 
-              href="mailto:contact@example.com" 
+              href="mailto:sra12@rice.edu" 
               className="social-icon"
               aria-label="Email"
             >
