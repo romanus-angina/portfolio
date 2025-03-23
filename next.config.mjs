@@ -2,7 +2,7 @@
 const nextConfig = {
     reactStrictMode: true,
     // Configure for GitHub Pages
-    basePath: process.env.NODE_ENV === 'production' ? '/portfolio-website' : '',
+    basePath: '',
     trailingSlash: true,
     images: {
       unoptimized: true, // Required for static export
