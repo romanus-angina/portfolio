@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaExternalLinkAlt, FaRegFilePdf, FaChip, FaServer } from 'react-icons/fa';
+import { FaExternalLinkAlt, FaRegFilePdf, FaMicrochip, FaServer } from 'react-icons/fa';
 
 const ResearchSection = () => {
   const researchProjects = [
@@ -12,7 +12,7 @@ const ResearchSection = () => {
       description: "Designed and optimized advanced GaN power devices, including trench FETs, multichannel FETs, and FinFETs, using TCAD simulations to achieve E-mode operation, low ON-resistance, high breakdown voltage, and enhanced reliability.",
       tech: ["TCAD", "MATLAB", "Python", "Data Analysis", "GaN Power Devices"],
       paperLink: "https://ieeexplore.ieee.org/",
-      icon: <FaChip size={24} />
+      icon: <FaMicrochip size={24} />
     },
   ];
 

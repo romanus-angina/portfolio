@@ -1,14 +1,13 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-    reactStrictMode: true,
-    // Configure for GitHub Pages
-    basePath: '',
-    trailingSlash: true,
-    images: {
-      unoptimized: true, // Required for static export
-    },
-    // For GitHub Pages deployment
-    output: 'export',
-  };
+ const nextConfig = {
+  reactStrictMode: true,
+  output: 'export',
+  images: {
+    unoptimized: true,
+  },
+  
+  basePath: '',
+  trailingSlash: true,
+};
   
   export default nextConfig;

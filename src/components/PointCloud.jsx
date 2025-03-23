@@ -33,6 +33,7 @@ const PointCloud = () => {
   
   // Initialize Three.js scene
   useEffect(() => {
+    const mounted = { current: true };
     if (!isClient || !containerRef.current) return;
     
     console.log("Initializing point cloud profile...");
@@ -42,6 +43,8 @@ const PointCloud = () => {
       try {
         // Dynamically import Three.js
         const THREE = await import('three');
+
+        if (!mounted.current) return;
         
         // Create scene
         const scene = new THREE.Scene();
@@ -99,6 +102,7 @@ const PointCloud = () => {
     
     // Cleanup function
     return () => {
+      mounted.current = false;
       console.log("Cleaning up point cloud resources");
       
       if (animationRef.current) {
