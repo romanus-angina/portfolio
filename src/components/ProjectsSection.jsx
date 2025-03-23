@@ -15,8 +15,8 @@ const ProjectsSection = () => {
       title: "Portfolio Website",
       description: "Personal portfolio website built with modern web technologies featuring Three.js effects, GSAP animations, and responsive design.",
       tech: ["React", "Next.js", "Three.js", "GSAP"],
-      github: "https://github.com/romanus-angina/romanus-angina.github.io",
-      external: "#",
+      github: "https://github.com/romanus-angina/portfolio",
+      external: "https://github.com/romanus-angina/portfolio",
       featured: true
     },
     {
@@ -24,7 +24,7 @@ const ProjectsSection = () => {
       description: "Klix is a dual-AI call automation platform that manages phone calls via conversational agents, providing real-time transcription, quality evaluation, and insights—eliminating time-consuming manual tasks..",
       tech: ["FastAPI", "three.js", "PostgreSQL", "Tailwind CSS", "HTML/CSS"],
       github: "https://github.com/ahitagnied/klix",
-      external: "#",
+      external: "https://github.com/ahitagnied/klix",
       featured: false
     },
     {

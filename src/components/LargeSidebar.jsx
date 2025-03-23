@@ -137,7 +137,9 @@ const LargeSidebar = ({ activeSection }) => {
               <FaFileAlt size={20} />
             </a>
             <a 
-              href="mailto:sra12@rice.edu" 
+              href="https://mail.google.com/mail/?view=cm&fs=1&to=sra12@rice.edu" 
+              target="_blank"
+              rel="noopener noreferrer"
               className="social-icon"
               aria-label="Email"
             >
