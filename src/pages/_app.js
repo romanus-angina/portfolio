@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 import { ScrollToPlugin } from 'gsap/dist/ScrollToPlugin';
+import Head from 'next/head';
 
 // Register GSAP plugins
 if (typeof window !== 'undefined') {
@@ -40,5 +41,12 @@ export default function App({ Component, pageProps }) {
     // and page transitions recreate the entire component tree
   }, []);
   
-  return <Component {...pageProps} />;
+  return (
+    <>
+      <Head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+      </Head>
+      <Component {...pageProps} />
+    </>
+  );
 }

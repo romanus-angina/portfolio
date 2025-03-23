@@ -2,25 +2,7 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import { FaGithub, FaLinkedin, FaFileAlt, FaEnvelope } from 'react-icons/fa';
-import dynamic from 'next/dynamic';
-
-// Dynamically import the PointCloud component with SSR disabled
-const PointCloud = dynamic(() => import('./PointCloud'), {
-  ssr: false,
-  loading: () => (
-    <div 
-      className="point-cloud-placeholder" 
-      style={{
-        width: '300px',
-        height: '300px',
-        margin: '0 auto',
-        borderRadius: '50%',
-        background: 'rgba(30, 30, 36, 0.5)',
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
-      }}
-    />
-  )
-});
+import PointCloud from './PointCloud';
 
 const LargeSidebar = ({ activeSection }) => {
   const sidebarRef = useRef(null);
@@ -387,4 +369,3 @@ const LargeSidebar = ({ activeSection }) => {
 };
 
 export default LargeSidebar;
-
