@@ -59,3 +59,6 @@ pnpm-lock.yaml
 
 # Optional eslint cache
 .eslintcache
+
+# macOS files
+.DS_Store
