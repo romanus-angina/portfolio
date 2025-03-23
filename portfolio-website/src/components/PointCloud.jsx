@@ -1,14 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 
-const AdvancedPointCloudProfile = () => {
+const PointCloud = () => {
   // Component state
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [status, setStatus] = useState("Initializing...");
   const [isClient, setIsClient] = useState(false);
+  const [isExploding, setIsExploding] = useState(false);
   const mousePosition = useRef({ x: 0, y: 0, worldX: 0, worldY: 0 });
   const isMouseInside = useRef(false);
+  const explosionInProgressRef = useRef(false); // Track explosion state in a ref for immediate access
   
   // Refs for Three.js objects
   const containerRef = useRef(null);
@@ -17,6 +19,12 @@ const AdvancedPointCloudProfile = () => {
   const cameraRef = useRef(null);
   const pointCloudRef = useRef(null);
   const animationRef = useRef(null);
+  const rotationRef = useRef({ x: -0.2205, y: 0, z: 0 }); // Store current rotation values
+  const rotationDirectionRef = useRef(1); // 1 for positive direction, -1 for negative direction
+  
+  // Configuration for rotation
+  const ROTATION_SPEED = 0.0007; 
+  const MAX_Y_ROTATION = 0.49; 
   
   // Set isClient to true when component mounts
   useEffect(() => {
@@ -71,6 +79,9 @@ const AdvancedPointCloudProfile = () => {
           resetAllParticles();
         });
         
+        // Add click event listener for explosion effect
+        containerRef.current.addEventListener('click', explodePointCloud);
+        
         // Start animation
         animate();
         
@@ -98,6 +109,7 @@ const AdvancedPointCloudProfile = () => {
         containerRef.current.removeEventListener('mousemove', handleMouseMove);
         containerRef.current.removeEventListener('mouseenter', () => { isMouseInside.current = true; });
         containerRef.current.removeEventListener('mouseleave', () => { isMouseInside.current = false; });
+        containerRef.current.removeEventListener('click', explodePointCloud);
         
         if (rendererRef.current && rendererRef.current.domElement) {
           try {
@@ -136,8 +148,100 @@ const AdvancedPointCloudProfile = () => {
     };
   }, [isClient]);
 
+  // Explode point cloud on click
+  const explodePointCloud = (event) => {
+    // Check both state and ref to prevent multiple explosions
+    if (isExploding || explosionInProgressRef.current || !pointCloudRef.current || !pointCloudRef.current.children || pointCloudRef.current.children.length === 0) {
+      // Prevent default click behavior if explosion is in progress
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    
+    // Set exploding state and ref to prevent multiple explosions
+    setIsExploding(true);
+    explosionInProgressRef.current = true;
+    
+    // Update cursor to show not-allowed during explosion
+    if (containerRef.current) {
+      containerRef.current.style.cursor = 'not-allowed';
+    }
+    
+    const particles = pointCloudRef.current.children;
+    
+    // Stop any ongoing animations
+    gsap.killTweensOf(particles.map(p => p.position));
+    
+    // Apply explosion effect to each particle
+    particles.forEach(particle => {
+      if (!particle || !particle.userData || !particle.position) return;
+      
+      // Store original positions if not already stored
+      if (!particle.userData.explosionOriginalX) {
+        particle.userData.explosionOriginalX = particle.position.x;
+        particle.userData.explosionOriginalY = particle.position.y;
+        particle.userData.explosionOriginalZ = particle.position.z;
+      }
+      
+      // Calculate random explosion direction
+      const explosionDirection = {
+        x: (Math.random() * 2 - 1) * 30,
+        y: (Math.random() * 2 - 1) * 30,
+        z: (Math.random() * 2 - 1) * 30,
+      };
+      
+      // Apply explosion animation
+      gsap.to(particle.position, {
+        x: particle.position.x + explosionDirection.x,
+        y: particle.position.y + explosionDirection.y,
+        z: particle.position.z + explosionDirection.z,
+        duration: 1.5,
+        ease: "power2.out",
+      });
+    });
+    
+    // After explosion, animate particles back to their original positions
+    setTimeout(() => {
+      // Create a timeline for the reassembly animation
+      const timeline = gsap.timeline({
+        onComplete: () => {
+          // Only reset exploding state after a delay to ensure all animations completed
+          setTimeout(() => {
+            setIsExploding(false);
+            explosionInProgressRef.current = false;
+            
+            // Restore cursor to pointer
+            if (containerRef.current) {
+              containerRef.current.style.cursor = 'pointer';
+            }
+          }, 500);
+        }
+      });
+      
+      // Random delay for each particle to create a staggered effect
+      particles.forEach(particle => {
+        if (!particle || !particle.userData) return;
+        
+        // Random delay between 0 and 1 second
+        const delay = Math.random();
+        
+        // Animate particles back to original positions
+        timeline.to(particle.position, {
+          x: particle.userData.originalX,
+          y: particle.userData.originalY,
+          z: particle.userData.originalZ,
+          duration: 2,
+          ease: "elastic.out(1, 0.3)",
+          delay: delay
+        }, 0);
+      });
+    }, 2000);
+  };
+
   // Reset all particles to their original positions
   const resetAllParticles = () => {
+    if (isExploding || explosionInProgressRef.current) return; // Don't reset during explosion animation
+    
     if (!pointCloudRef.current || !pointCloudRef.current.children) return;
     
     const particles = pointCloudRef.current.children;
@@ -213,6 +317,10 @@ const AdvancedPointCloudProfile = () => {
       // Add group to scene
       sceneRef.current.add(group);
       
+      // Set initial tilt and store in rotationRef
+      group.rotation.x = -0.2205;
+      rotationRef.current.x = -0.2205;
+      
       // Animate entrance by columns
       animateByColumns(group.children);
       
@@ -223,7 +331,7 @@ const AdvancedPointCloudProfile = () => {
     }
   };
   
-  // Animate entrance by columns
+  // Animate entrance column by column
   const animateByColumns = (particles) => {
     if (!particles || particles.length === 0) return;
     
@@ -312,27 +420,9 @@ const AdvancedPointCloudProfile = () => {
         setLoading(false);
       };
       
-      // Try different paths for the image
-      const imagePaths = [
-        "/images/profile.jpg",
-        "/profile.jpg",
-        "../public/images/profile.jpg",
-        "images/profile.jpg"
-      ];
-      
       // Try the first path
-      console.log("Attempting to load image from:", imagePaths[0]);
-      img.src = imagePaths[0];
+      img.src = "images/profile.jpg";
       
-      // If that fails, try the next paths
-      let pathIndex = 1;
-      img.addEventListener('error', () => {
-        if (pathIndex < imagePaths.length) {
-          console.log("Retrying with path:", imagePaths[pathIndex]);
-          img.src = imagePaths[pathIndex];
-          pathIndex++;
-        }
-      });
     } catch (err) {
       console.error("Error setting up image load:", err);
       setStatus("Using fallback grid (image setup failed)");
@@ -366,15 +456,15 @@ const AdvancedPointCloudProfile = () => {
       
       // Process image pixels in a circular pattern
       let particleCount = 0;
-      const maxParticles = 10000; // Limit to avoid performance issues
+      const maxParticles = 10000; // Maximum number of particles
       const sampleRate = 5; // Sample every nth pixel
       
       // Organize particles by columns for entrance animation
       const columnParticles = {};
       const columnWidth = 1.5; // Width of each column
       
-      // Center hole dimensions (skip these pixels to remove black dot in center)
-      const centerHoleRadius = maxRadius * 0.075; // Size of the hole in the center
+      // Center hole dimensions 
+      const centerHoleRadius = 0; 
       
       // Loop through the image in a circular pattern
       for (let radius = centerHoleRadius; radius < maxRadius; radius += sampleRate/2) {
@@ -413,8 +503,8 @@ const AdvancedPointCloudProfile = () => {
             const posX = (radius * Math.cos(angle)) / scaleFactor;
             // Flip Y axis to correct the orientation
             const posY = -(radius * Math.sin(angle)) / scaleFactor;
-            // Use depth based on brightness for 2.5D effect - brighter points come forward
-            const posZ = brightness * 3;
+            // Use depth based on brightness for 2.5D 
+            const posZ = brightness * 5; 
             
             // Create material with the pixel color
             const material = new THREE.MeshBasicMaterial({
@@ -455,8 +545,9 @@ const AdvancedPointCloudProfile = () => {
       // Add group to scene
       sceneRef.current.add(group);
       
-      // Tilt the group slightly to enhance 2.5D effect without affecting cursor interaction
-      group.rotation.x = -0.15; // Tilt forward slightly
+      // Tilt the group more for a better view
+      group.rotation.x = -0.2205;
+      rotationRef.current.x = -0.2205;
       
       // Animate entrance by columns
       animateByColumns(group.children);
@@ -499,16 +590,16 @@ const AdvancedPointCloudProfile = () => {
       animationRef.current = requestAnimationFrame(animate);
       
       // Apply cursor flow effect to particles
-      if (pointCloudRef.current && pointCloudRef.current.children) {
+      if (pointCloudRef.current && pointCloudRef.current.children && !isExploding && !explosionInProgressRef.current) {
         const particles = pointCloudRef.current.children;
         
         if (isMouseInside.current) {
           const mouseX = mousePosition.current.worldX;
           const mouseY = mousePosition.current.worldY;
           
-          // Parameters for cursor flow effect - smaller influence radius
-          const influenceRadius = 0.375; // Radius of influence
-          const pushStrength = 2.5; // How strongly particles are pushed
+          // Parameters for cursor flow effect
+          const influenceRadius = 0.375; 
+          const pushStrength = 2.5;
           
           // Apply effect to particles
           for (let i = 0; i < particles.length; i++) {
@@ -575,10 +666,20 @@ const AdvancedPointCloudProfile = () => {
         }
       }
       
-      // Add subtle continuous rotation to the whole group
+      // Apply oscillating rotation with direction changes
       if (pointCloudRef.current) {
-        // Very slight rotation to maintain slight movement without compromising cursor interaction
-        pointCloudRef.current.rotation.y += 0.0002;
+        // Calculate new Y rotation based on current direction and speed
+        rotationRef.current.y += ROTATION_SPEED * rotationDirectionRef.current;
+        
+        // Check if we've hit a limit and need to change direction
+        if (rotationRef.current.y >= MAX_Y_ROTATION) {
+          rotationDirectionRef.current = -1; // Change to negative direction
+        } else if (rotationRef.current.y <= -MAX_Y_ROTATION) {
+          rotationDirectionRef.current = 1; // Change to positive direction
+        }
+        
+        // Apply the rotation
+        pointCloudRef.current.rotation.y = rotationRef.current.y;
       }
       
       // Render the scene
@@ -609,7 +710,7 @@ const AdvancedPointCloudProfile = () => {
       <div className="profile-container">
         <div 
           ref={containerRef} 
-          className={`point-cloud-container ${loading ? 'loading' : ''}`}
+          className={`point-cloud-container ${loading ? 'loading' : ''} ${isExploding ? 'exploding' : ''}`}
           style={{
             width: '300px',
             height: '300px',
@@ -620,13 +721,11 @@ const AdvancedPointCloudProfile = () => {
             background: 'rgba(30, 30, 36, 0.5)',
             zIndex: 1,
             boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
-            transition: 'opacity 0.5s ease, transform 0.5s ease'
+            transition: 'opacity 0.5s ease, transform 0.5s ease',
+            cursor: isExploding || explosionInProgressRef.current ? 'not-allowed' : 'pointer' // Dynamic cursor
           }}
         />
-        
-        <div className="profile-caption">
-          <span className="caption-highlight">✧</span> Interactive Point Cloud <span className="caption-highlight">✧</span>
-        </div>
+    
       </div>
 
       <style jsx>{`
@@ -708,6 +807,10 @@ const AdvancedPointCloudProfile = () => {
           transform: translateY(10px);
         }
         
+        .point-cloud-container.exploding {
+          pointer-events: none; /* Disable pointer events during explosion */
+        }
+        
         .profile-caption {
           font-family: 'SF Mono', 'Fira Code', monospace;
           font-size: 0.85rem;
@@ -715,6 +818,12 @@ const AdvancedPointCloudProfile = () => {
           margin-top: 1.25rem;
           text-align: center;
           letter-spacing: 0.5px;
+        }
+        
+        .interaction-hint {
+          font-size: 0.75rem;
+          opacity: 0.7;
+          margin-top: 0.5rem;
         }
         
         .caption-highlight {
@@ -733,4 +842,4 @@ const AdvancedPointCloudProfile = () => {
   );
 };
 
-export default AdvancedPointCloudProfile;
+export default PointCloud;

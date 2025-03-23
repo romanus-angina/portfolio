@@ -86,18 +86,45 @@ const Layout = ({ children }) => {
 
   return (
     <div className="layout modern-layout">
-      {/* Use the metallic background instead of SimpleBackground */}
       <MetallicBackground />
-      
-      {/* Add CursorGlow for the glowing cursor effect */}
       <CursorGlow />
       
       <div className="content-container">
         <LargeSidebar activeSection={activeSection} />
         <main className="main-content">
           {children}
+          
+          {/* Technology footer */}
+          <div className="tech-footer">
+            <div className="tech-footer-content">
+               Built with <span className="tech-highlight">Next.js</span>, <span className="tech-highlight">Three.js</span>, and <span className="tech-highlight">React</span>. 
+              Animations powered by <span className="tech-highlight">GSAP</span>.
+            </div>
+          </div>
         </main>
       </div>
+      
+      <style jsx>{`
+        .tech-footer {
+          width: 100%;
+          padding: 2rem 0;
+          margin-top: 3rem;
+        }
+        
+        .tech-footer-content {
+          color: #8892b0;
+          font-size: 0.9rem;
+          line-height: 1.5;
+          text-align: center;
+          max-width: 600px;
+          margin: 0 auto;
+        }
+        
+        .tech-highlight {
+          color: #ffffff;
+          font-weight: 500;
+        }
+      `}</style>
     </div>
   );
 };

@@ -29,16 +29,16 @@ const CursorGlow = () => {
     };
   }, []);
   
-  // Build an ultra-smooth gradient with 30 steps
+  // Build smooth gradient with 30 steps
   const buildUltraSmoothGradient = () => {
-    const steps = 30; // Using 30 steps for extreme smoothness
+    const steps = 30;
     let gradient = 'radial-gradient(circle at center,';
     
     for (let i = 0; i <= steps; i++) {
       const percentage = (i / steps) * 100;
       
-      // Calculate opacity with a smooth curve that tapers off extremely gradually
-      // Using a cubic function for smoother tapering at the edges
+      // Calculate opacity with a smooth curve that tapers off gradually
+      // Cubic function for smoother tapering at the edges
       let opacity;
       if (i === 0) {
         opacity = 0.15; // Start at 0.15

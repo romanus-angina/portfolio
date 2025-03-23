@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
-import { FaGithub, FaLinkedin, FaFileAlt } from 'react-icons/fa';
+import { FaGithub, FaLinkedin, FaFileAlt, FaEnvelope } from 'react-icons/fa';
+import PointCloud from './PointCloud';
 
 const LargeSidebar = ({ activeSection }) => {
   const sidebarRef = useRef(null);
@@ -72,11 +73,18 @@ const LargeSidebar = ({ activeSection }) => {
       <div className="sidebar-content">
         <div className="sidebar-top">
           <div className="sidebar-header">
-            <h1 ref={nameRef} className="name">Romanus<br/>Ang'ina</h1>
-            <h2 ref={titleRef} className="title">Electrical and Computer Engineering Student</h2>
-            <p ref={descriptionRef} className="description">
-              I build digital experiences for the web.
-            </p>
+            <div className="header-with-pointcloud">
+              <div className="header-text">
+                <h1 ref={nameRef} className="name">Romanus<br/>Ang'ina</h1>
+                <h2 ref={titleRef} className="title">Electrical and Computer Engineering Student</h2>
+                <p ref={descriptionRef} className="description">
+                  I build digital experiences for the web.
+                </p>
+              </div>
+              <div className="point-cloud-wrapper">
+                <PointCloud />
+              </div>
+            </div>
           </div>
           
           <nav ref={navRef} className="sidebar-nav">
@@ -129,6 +137,13 @@ const LargeSidebar = ({ activeSection }) => {
               <FaFileAlt size={20} />
             </a>
             <a 
+              href="mailto:contact@example.com" 
+              className="social-icon"
+              aria-label="Email"
+            >
+              <FaEnvelope size={20} />
+            </a>
+            <a 
               href="https://github.com/romanus-angina" 
               target="_blank" 
               rel="noopener noreferrer" 
@@ -157,7 +172,7 @@ const LargeSidebar = ({ activeSection }) => {
           position: sticky;
           top: 0;
           left: 0;
-          padding: 2rem;
+          padding: 1rem 1.5rem;
           display: flex;
           flex-direction: column;
           z-index: 10;
@@ -175,34 +190,51 @@ const LargeSidebar = ({ activeSection }) => {
         }
         
         .sidebar-header {
-          margin-bottom: 2rem;
+          margin-bottom: 0.5rem;
+        }
+        
+        .header-with-pointcloud {
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+          gap: 1rem;
+        }
+        
+        .header-text {
+          flex: 1;
+        }
+        
+        .point-cloud-wrapper {
+          width: 45%;
+          min-width: 170px;
         }
         
         .sidebar-header .name {
-          font-size: 5rem;
+          font-size: 4rem;
           font-weight: 700;
           line-height: 1;
-          margin-bottom: 1rem;
+          margin-bottom: 0.75rem;
           color: #ffffff;
         }
         
         .sidebar-header .title {
-          font-size: 1.2rem;
+          font-size: 1.1rem;
           font-weight: 500;
-          margin-bottom: 1.5rem;
+          margin-bottom: 0.75rem;
           color: #ffffff;
         }
         
         .sidebar-header .description {
-          font-size: 1.1rem;
+          font-size: 1rem;
           color: #b3b3b3;
-          max-width: 400px;
-          line-height: 1.5;
+          line-height: 1.4;
+          margin-bottom: 0.25rem;
         }
         
         /* Updated navigation styles with white active colors */
         .sidebar-nav {
-          margin: 2rem 0;
+          margin: 1rem 0;
         }
         
         .sidebar-nav ul {
@@ -222,7 +254,7 @@ const LargeSidebar = ({ activeSection }) => {
           align-items: center;
           color: #b3b3b3;
           transition: color 0.2s ease;
-          padding: 0.4rem 0;
+          padding: 0.3rem 0;
         }
         
         .nav-item.active .nav-link {
@@ -268,24 +300,23 @@ const LargeSidebar = ({ activeSection }) => {
         
         /* Social links styling */
         .sidebar-footer {
-          padding-top: 2rem;
-          padding-bottom: 1rem;
-          margin-top: 2rem;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          padding-top: 1.5rem;
+          padding-bottom: 0.75rem;
+          margin-top: 1rem;
         }
         
         .social-links {
           display: flex;
           justify-content: center;
-          gap: 2rem;
+          gap: 1.5rem;
         }
         
         .social-icon {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 45px;
-          height: 45px;
+          width: 40px;
+          height: 40px;
           border-radius: 50%;
           color: #b3b3b3;
           background-color: #252530;
@@ -303,7 +334,23 @@ const LargeSidebar = ({ activeSection }) => {
             width: 100%;
             height: auto;
             position: relative;
-            padding: 2rem 1rem;
+            padding: 1rem;
+          }
+          
+          .header-with-pointcloud {
+            flex-direction: column;
+            align-items: center;
+          }
+          
+          .header-text {
+            text-align: center;
+            margin-bottom: 1rem;
+          }
+          
+          .point-cloud-wrapper {
+            width: 100%;
+            max-width: 220px;
+            margin: 0 auto;
           }
           
           .sidebar-header .name {
