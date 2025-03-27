@@ -9,7 +9,7 @@ const CursorGlow = () => {
     if (!glow) return;
     
     
-    glow.style.opacity = "0.25";
+    glow.style.opacity = "0.50";
     
     const onMouseMove = (e) => {
       // Direct DOM manipulation for maximum performance and consistency
@@ -41,11 +41,11 @@ const CursorGlow = () => {
       // Cubic function for smoother tapering at the edges
       let opacity;
       if (i === 0) {
-        opacity = 0.15; // Start at 0.15
+        opacity = 0.35; 
       } else {
         // Cubic function that starts higher and falls off very gradually
         const t = i / steps;
-        opacity = 0.15 * Math.pow(1 - t, 3);
+        opacity = 0.35 * Math.pow(1 - t, 3);
         
         // Ensure we never go below 0.001 until the very end
         if (i < steps && opacity < 0.001) opacity = 0.001;
