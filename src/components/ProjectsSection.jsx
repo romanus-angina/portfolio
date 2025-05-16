@@ -20,14 +20,6 @@ const ProjectsSection = () => {
       featured: true
     },
     {
-      title: "Klix: A Dual-AI Implementation for Automated Business Calls with Parallel ML Engines",
-      description: "Klix is a dual-AI call automation platform that manages phone calls via conversational agents, providing real-time transcription, quality evaluation, and insights—eliminating time-consuming manual tasks..",
-      tech: ["FastAPI", "three.js", "PostgreSQL", "Tailwind CSS", "HTML/CSS"],
-      github: "https://github.com/ahitagnied/klix",
-      external: "https://github.com/ahitagnied/klix",
-      featured: false
-    },
-    {
         title: "In Progress: Baby GPU",
         description: "Baby GPU is a simple GPU built in verilog that goes over the functioning of GPUs from the ground up.",
         tech: ["verilog", "FPGA", "GPU", "Computer Architecture"],
