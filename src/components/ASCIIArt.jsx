@@ -2,17 +2,29 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { gsap } from 'gsap';
 
 /**
- * ASCIIArt Component - Simple and Clean
+ * ASCIIArt Component - Customizable ASCII Art Generator
  * 
- * Converts an image to ASCII art with basic processing.
+ * Converts an image to ASCII art with customizable color schemes.
+ * Perfect for folder previews with different color themes.
+ * 
+ * @param {string} imagePath - Path to the image file
+ * @param {number} width - Fixed width (optional, uses dynamic resolution if null)
+ * @param {number} height - Fixed height (optional, uses dynamic resolution if null)
+ * @param {string} asciiChars - Character set for ASCII conversion
+ * @param {string} className - Additional CSS classes
+ * @param {function} onLoad - Callback when ASCII art is generated
+ * @param {boolean} useColorVariations - Enable/disable color variations
+ * @param {string} colorScheme - Color scheme: 'white', 'green', 'blue', 'purple', 'orange', 'red'
  */
 const ASCIIArt = ({ 
   imagePath = '/images/profile.jpg',
-  width = 120,
-  height = 80,
+  width = null, // Will be calculated dynamically
+  height = null, // Will be calculated dynamically
   asciiChars = ' .:-=+*#%@',
   className = '',
-  onLoad = null
+  onLoad = null,
+  useColorVariations = true,
+  colorScheme = 'white' // 'white', 'green', 'blue', 'purple', 'orange', 'red', or custom object
 }) => {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
@@ -20,12 +32,144 @@ const ASCIIArt = ({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isError, setIsError] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
+  const [screenSize, setScreenSize] = useState({ width: 0, height: 0 });
+  const [dynamicResolution, setDynamicResolution] = useState({ width: 120, height: 80 });
+
+  // Predefined color schemes
+  const colorSchemes = {
+    white: {
+      dark: { r: 0.8, g: 0.8, b: 1.0, intensity: [40, 140] },
+      medium: { r: 0.9, g: 0.9, b: 1.0, intensity: [140, 200] },
+      light: { r: 1.0, g: 1.0, b: 1.0, intensity: [200, 255] }
+    },
+    green: {
+      dark: { r: 0.2, g: 0.6, b: 0.3, intensity: [40, 140] },
+      medium: { r: 0.3, g: 0.8, b: 0.4, intensity: [140, 200] },
+      light: { r: 0.6, g: 1.0, b: 0.7, intensity: [200, 255] }
+    },
+    blue: {
+      dark: { r: 0.2, g: 0.4, b: 1.0, intensity: [40, 140] },
+      medium: { r: 0.2, g: 0.6, b: 1.0, intensity: [140, 200] },
+      light: { r: 0.4, g: 0.8, b: 1.0, intensity: [200, 255] }
+    },
+    purple: {
+      dark: { r: 0.4, g: 0.2, b: 0.8, intensity: [40, 140] },
+      medium: { r: 0.6, g: 0.3, b: 0.9, intensity: [140, 200] },
+      light: { r: 0.8, g: 0.5, b: 1.0, intensity: [200, 255] }
+    },
+    orange: {
+      dark: { r: 0.8, g: 0.4, b: 0.2, intensity: [40, 140] },
+      medium: { r: 1.0, g: 0.6, b: 0.3, intensity: [140, 200] },
+      light: { r: 1.0, g: 0.8, b: 0.5, intensity: [200, 255] }
+    },
+    red: {
+      dark: { r: 0.8, g: 0.2, b: 0.2, intensity: [40, 140] },
+      medium: { r: 1.0, g: 0.3, b: 0.3, intensity: [140, 200] },
+      light: { r: 1.0, g: 0.6, b: 0.6, intensity: [200, 255] }
+    }
+  };
+
+  // Calculate color for character based on brightness and color scheme
+  const getColorForBrightness = (brightness) => {
+    // Normalize brightness to 0-1 range
+    const normalizedBrightness = brightness / 255;
+    
+    // Get color scheme (handle both string keys and custom objects)
+    const scheme = typeof colorScheme === 'string' 
+      ? (colorSchemes[colorScheme] || colorSchemes.white)
+      : colorScheme;
+    
+    // Define color ranges
+    const darkThreshold = 0.3;
+    const mediumThreshold = 0.7;
+    
+    let colorConfig;
+    let intensity;
+    
+    if (normalizedBrightness < darkThreshold) {
+      // Dark areas
+      colorConfig = scheme.dark;
+      intensity = normalizedBrightness / darkThreshold;
+    } else if (normalizedBrightness < mediumThreshold) {
+      // Medium areas
+      colorConfig = scheme.medium;
+      intensity = (normalizedBrightness - darkThreshold) / (mediumThreshold - darkThreshold);
+    } else {
+      // Light areas
+      colorConfig = scheme.light;
+      intensity = (normalizedBrightness - mediumThreshold) / (1 - mediumThreshold);
+    }
+    
+    // Calculate final color values
+    const baseIntensity = colorConfig.intensity[0] + (colorConfig.intensity[1] - colorConfig.intensity[0]) * intensity;
+    const r = Math.floor(baseIntensity * colorConfig.r);
+    const g = Math.floor(baseIntensity * colorConfig.g);
+    const b = Math.floor(baseIntensity * colorConfig.b);
+    
+    return {
+      color: `rgb(${r}, ${g}, ${b})`,
+      textShadow: `0 0 8px rgba(${r}, ${g}, ${b}, 0.8)`
+    };
+  };
+
+  // Calculate dynamic resolution based on screen size
+  const calculateDynamicResolution = (screenWidth, screenHeight) => {
+    // Base resolution for mobile (320px width)
+    const baseWidth = 320;
+    const baseResolution = { width: 80, height: 60 };
+    
+    // Calculate scale factor based on screen width
+    const scaleFactor = Math.min(screenWidth / baseWidth, 3); // Cap at 3x for very large screens
+    
+    // Calculate resolution with scale factor
+    const newWidth = Math.round(baseResolution.width * scaleFactor);
+    const newHeight = Math.round(baseResolution.height * scaleFactor);
+    
+    // Ensure minimum resolution
+    const minWidth = 60;
+    const minHeight = 45;
+    
+    return {
+      width: Math.max(newWidth, minWidth),
+      height: Math.max(newHeight, minHeight)
+    };
+  };
+
+  // Handle screen size changes and update resolution
+  useEffect(() => {
+    const updateScreenSize = () => {
+      const newScreenSize = {
+        width: window.innerWidth,
+        height: window.innerHeight
+      };
+      setScreenSize(newScreenSize);
+      
+      // Calculate new resolution based on screen size
+      const newResolution = calculateDynamicResolution(newScreenSize.width, newScreenSize.height);
+      setDynamicResolution(newResolution);
+    };
+
+    // Initial screen size
+    updateScreenSize();
+
+    // Add resize listener
+    window.addEventListener('resize', updateScreenSize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', updateScreenSize);
+  }, []);
 
   // Convert image to ASCII using HTML5 Canvas
   const convertImageToASCII = async () => {
+    // Use dynamic resolution or fallback to props
+    const finalWidth = width || dynamicResolution.width;
+    const finalHeight = height || dynamicResolution.height;
+    
     console.log('ASCIIArt: Starting conversion...');
     console.log('Image path:', imagePath);
-    console.log('Width:', width, 'Height:', height);
+    console.log('Width:', finalWidth, 'Height:', finalHeight);
+    console.log('Screen size:', screenSize);
+    console.log('Dynamic resolution:', dynamicResolution);
     
     const canvas = canvasRef.current;
     if (!canvas) {
@@ -49,16 +193,16 @@ const ASCIIArt = ({
       try {
         // Calculate aspect ratio and set canvas size
         const aspectRatio = img.width / img.height;
-        let canvasWidth = width;
-        let canvasHeight = height;
+        let canvasWidth = finalWidth;
+        let canvasHeight = finalHeight;
         
         // Maintain aspect ratio
         if (aspectRatio > 1) {
           // Image is wider than tall
-          canvasHeight = Math.round(width / aspectRatio);
+          canvasHeight = Math.round(finalWidth / aspectRatio);
         } else {
           // Image is taller than wide
-          canvasWidth = Math.round(height * aspectRatio);
+          canvasWidth = Math.round(finalHeight * aspectRatio);
         }
         
         canvas.width = canvasWidth;
@@ -76,7 +220,7 @@ const ASCIIArt = ({
         console.log('Image data length:', data.length);
         console.log('Processing dimensions:', canvasWidth, 'x', canvasHeight);
         
-        // Convert to ASCII using actual canvas dimensions
+        // Convert to ASCII using enhanced character selection
         let ascii = '';
         for (let y = 0; y < canvasHeight; y += 2) { // Skip every other row
           for (let x = 0; x < canvasWidth; x += 1) {
@@ -85,8 +229,10 @@ const ASCIIArt = ({
             const g = data[index + 1];
             const b = data[index + 2];
             
-            // Calculate brightness
-            const brightness = (0.299 * r + 0.587 * g + 0.114 * b);
+            // Calculate brightness using standard luminance formula
+            const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+            
+            // Use simple character selection for now
             const charIndex = Math.floor((brightness / 255) * (asciiChars.length - 1));
             ascii += asciiChars[charIndex];
           }
@@ -133,13 +279,13 @@ const ASCIIArt = ({
     }
   }, []);
 
-  // Initialize ASCII conversion when canvas is ready
+  // Initialize ASCII conversion when canvas is ready or resolution changes
   useEffect(() => {
     if (canvasReady && canvasRef.current) {
       console.log('ASCIIArt: Canvas is ready, starting conversion');
       convertImageToASCII();
     }
-  }, [canvasReady]); // Run when canvas becomes ready
+  }, [canvasReady, dynamicResolution]); // Run when canvas becomes ready or resolution changes
 
   // Animate ASCII text on load
   useEffect(() => {
@@ -167,26 +313,12 @@ const ASCIIArt = ({
   // Always render the canvas, even in loading state
   console.log('ASCIIArt: Rendering component, isLoaded:', isLoaded, 'isError:', isError);
 
-  // Error state
+  // Error state - simple fallback
   if (isError) {
-    const fallbackASCII = `
-    ╔══════════════════════════════════════╗
-    ║                                      ║
-    ║        ASCII ART COMPONENT           ║
-    ║                                      ║
-    ║     Image failed to load or          ║
-    ║     processing timeout occurred       ║
-    ║                                      ║
-    ║     Check console for details        ║
-    ║                                      ║
-    ╚══════════════════════════════════════╝
-    `;
-    
     return (
       <div className={`ascii-art-container ${className}`}>
         <div className="ascii-error">
           <div className="error-icon">⚠️</div>
-          <pre className="fallback-ascii">{fallbackASCII}</pre>
           <p>Failed to load image</p>
         </div>
       </div>
@@ -217,7 +349,21 @@ const ASCIIArt = ({
           <div ref={containerRef} className="ascii-text">
             {asciiText.split('\n').map((line, index) => (
               <div key={index} className="ascii-line">
-                {line}
+                {line.split('').map((char, charIndex) => {
+                  // Calculate color based on character position in brightness range
+                  const charBrightness = (asciiChars.indexOf(char) / (asciiChars.length - 1)) * 255;
+                  const colorStyle = useColorVariations ? getColorForBrightness(charBrightness) : {};
+                  
+                  return (
+                    <span 
+                      key={charIndex} 
+                      className="ascii-char"
+                      style={colorStyle}
+                    >
+                      {char}
+                    </span>
+                  );
+                })}
               </div>
             ))}
           </div>
@@ -238,7 +384,7 @@ const ASCIIArt = ({
           font-family: 'IBM Plex Mono', monospace;
           font-size: 8px;
           line-height: 1;
-          color: #FFFFFF;
+          color: #FFFFFF; /* Fallback white color */
           text-align: center;
           white-space: pre;
           letter-spacing: 0;
@@ -250,21 +396,20 @@ const ASCIIArt = ({
           transform: perspective(1000px) rotateX(5deg) rotateY(-2deg);
           transform-style: preserve-3d;
           
-          /* Layered text shadow for depth */
-          text-shadow: 
-            0 0 5px rgba(255, 255, 255, 0.8),
-            0 0 10px rgba(255, 255, 255, 0.6),
-            0 0 15px rgba(255, 255, 255, 0.4),
-            0 0 20px rgba(255, 255, 255, 0.2),
-            0 1px 0 rgba(255, 255, 255, 0.1),
-            0 2px 0 rgba(255, 255, 255, 0.05),
-            0 3px 0 rgba(255, 255, 255, 0.02);
-          
-          /* Subtle glow */
-          filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
-          
           /* Gentle floating animation */
           animation: float3d 6s ease-in-out infinite;
+        }
+
+        .ascii-char {
+          display: inline-block;
+          transition: all 0.2s ease;
+          cursor: pointer;
+        }
+
+        .ascii-char:hover {
+          transform: scale(1.2) translateZ(2px);
+          filter: brightness(1.3);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .ascii-line {
@@ -307,15 +452,6 @@ const ASCIIArt = ({
           font-size: 2rem;
         }
 
-        .fallback-ascii {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 8px;
-          color: #FFFFFF;
-          text-align: center;
-          white-space: pre;
-          margin: 1rem 0;
-          opacity: 0.8;
-        }
 
         @keyframes pulse {
           0%, 100% { 
@@ -344,7 +480,13 @@ const ASCIIArt = ({
           transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Responsive design */
+        /* Responsive design with dynamic resolution */
+        @media (max-width: 1200px) {
+          .ascii-text {
+            font-size: 7px;
+          }
+        }
+
         @media (max-width: 768px) {
           .ascii-text {
             font-size: 6px;
@@ -359,6 +501,17 @@ const ASCIIArt = ({
         @media (max-width: 480px) {
           .ascii-text {
             font-size: 5px;
+          }
+          
+          .ascii-art-container {
+            padding: 0.5rem;
+            min-height: 120px;
+          }
+        }
+
+        @media (max-width: 320px) {
+          .ascii-text {
+            font-size: 4px;
           }
         }
 
