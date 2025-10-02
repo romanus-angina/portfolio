@@ -53,7 +53,7 @@ const FolderIcon = ({ folder, tabPosition = 'right', isActive = false, onClick }
             #ede8d0 50%, 
             #e5e0c8 100%
           );
-          border-radius: 4px 4px 12px 12px;
+          border-radius: 12px 12px 12px 12px;
           border-top: 2px solid rgba(200, 190, 160, 0.3);
           box-shadow: 
             0 8px 16px rgba(0, 0, 0, 0.2),
@@ -63,7 +63,7 @@ const FolderIcon = ({ folder, tabPosition = 'right', isActive = false, onClick }
         .folder-tab {
           position: absolute;
           top: 0;
-          right: 15%;
+          ${isLeftTab ? 'left: 15%' : 'right: 15%'};;
           width: 176px;
           height: 0;
           border-bottom: 48px solid #2a2a2a;

@@ -93,9 +93,7 @@ const FileCabinet = () => {
     }
   }, [activeFolder]);
 
-  // Calculate tab position based on index - alternates left/right like filing cabinet
   const getTabPosition = (index) => {
-    // Create a pattern that mimics the reference image
     const pattern = ['right', 'left', 'right', 'right', 'left', 'right'];
     return pattern[index % pattern.length];
   };
@@ -105,29 +103,30 @@ const FileCabinet = () => {
       <h2 className="section-title animate-in">File Cabinet</h2>
       
       <div className="file-cabinet-container" ref={fileCabinetRef}>
-        <div className="stacked-folders">
-          {folderData.map((folder, index) => (
-            <div 
-              key={folder.id} 
-              className="folder-wrapper"
-              style={{
-                transform: `
-                  translateY(${index * 35}px) 
-                  translateZ(${-index * 15}px) 
-                  rotateX(20deg)
-                `,
-                zIndex: folderData.length - index,
-                '--folder-index': index
-              }}
-            >
-              <FolderIcon
-                folder={folder}
-                tabPosition={getTabPosition(index)}
-                isActive={activeFolder && activeFolder.id === folder.id}
-                onClick={() => handleFolderClick(folder)}
-              />
-            </div>
-          ))}
+        <div className="drawer">
+          <div className="stacked-folders">
+            {folderData.map((folder, index) => (
+              <div 
+                key={folder.id} 
+                className="folder-wrapper"
+                style={{
+                  transform: `
+                    translateX(${index * 70}px)
+                    rotateY(-10deg)
+                  `,
+                  zIndex: index,
+                  '--folder-index': index
+                }}
+              >
+                <FolderIcon
+                  folder={folder}
+                  tabPosition={getTabPosition(index)}
+                  isActive={activeFolder && activeFolder.id === folder.id}
+                  onClick={() => handleFolderClick(folder)}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
       
@@ -147,7 +146,6 @@ const FileCabinet = () => {
           display: flex;
           flex-direction: column;
           justify-content: center;
-          perspective: 1200px;
         }
 
         .section-title {
@@ -160,7 +158,7 @@ const FileCabinet = () => {
         }
 
         .file-cabinet-container {
-          max-width: 1200px;
+          max-width: 1400px;
           margin: 0 auto;
           width: 100%;
           display: flex;
@@ -168,34 +166,41 @@ const FileCabinet = () => {
           align-items: center;
           min-height: 60vh;
           perspective: 1200px;
+          perspective-origin: center center;
+          overflow-x: auto;
+        }
+
+        .drawer {
+          transform-style: preserve-3d;
+          transform: rotateX(35deg) rotateY(5deg);
         }
 
         .stacked-folders {
           position: relative;
-          width: 600px;
-          height: 600px;
+          width: 1000px;
+          height: 450px;
           transform-style: preserve-3d;
         }
 
         .folder-wrapper {
           position: absolute;
           top: 0;
-          left: 50%;
-          transform-origin: center center;
-          transform-style: preserve-3d;
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          left: 0;
           width: 600px;
-          margin-left: -300px;
-          filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+          height: 450px;
+          transform-style: preserve-3d;
+          transform-origin: left center;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .folder-wrapper:hover {
           transform: 
-            translateY(calc(var(--folder-index) * 35px - 8px)) 
-            translateZ(calc(var(--folder-index) * -15px + 20px)) 
-            rotateX(20deg) 
-            scale(1.02);
+            translateX(calc(var(--folder-index) * 70px))
+            translateY(-10px)
+            rotateY(-10deg)
+            scale(1.03);
           filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+          z-index: 100;
         }
 
         .open-folder-wrapper {
@@ -208,11 +213,9 @@ const FileCabinet = () => {
           max-width: 800px;
         }
 
-        /* Responsive Design */
         @media (max-width: 768px) {
           .file-cabinet-section {
             padding: 3rem 1.5rem;
-            perspective: 800px;
           }
           
           .section-title {
@@ -220,28 +223,32 @@ const FileCabinet = () => {
             margin-bottom: 2rem;
           }
 
+          .file-cabinet-container {
+            perspective: 900px;
+          }
+
+          .drawer {
+            transform: rotateX(30deg) rotateY(5deg);
+          }
+
           .stacked-folders {
-            width: 400px;
-            height: 500px;
+            width: 800px;
+            height: 350px;
           }
 
           .folder-wrapper {
             width: 400px;
-            margin-left: -200px;
-          }
-
-          .folder-wrapper {
+            height: 350px;
             transform: 
-              translateY(calc(var(--folder-index) * 25px)) 
-              translateZ(calc(var(--folder-index) * -10px)) 
-              rotateX(15deg);
+              translateX(calc(var(--folder-index) * 50px))
+              rotateY(-10deg);
           }
 
           .folder-wrapper:hover {
             transform: 
-              translateY(calc(var(--folder-index) * 25px - 6px)) 
-              translateZ(calc(var(--folder-index) * -10px + 15px)) 
-              rotateX(15deg) 
+              translateX(calc(var(--folder-index) * 50px))
+              translateY(-8px)
+              rotateY(-10deg)
               scale(1.02);
           }
         }
@@ -249,7 +256,6 @@ const FileCabinet = () => {
         @media (max-width: 480px) {
           .file-cabinet-section {
             padding: 2rem 1rem;
-            perspective: 600px;
           }
           
           .section-title {
@@ -257,33 +263,36 @@ const FileCabinet = () => {
             margin-bottom: 1.5rem;
           }
 
+          .file-cabinet-container {
+            perspective: 700px;
+          }
+
+          .drawer {
+            transform: rotateX(25deg) rotateY(5deg);
+          }
+
           .stacked-folders {
-            width: 300px;
-            height: 400px;
+            width: 600px;
+            height: 280px;
           }
 
           .folder-wrapper {
             width: 300px;
-            margin-left: -150px;
-          }
-
-          .folder-wrapper {
+            height: 280px;
             transform: 
-              translateY(calc(var(--folder-index) * 20px)) 
-              translateZ(calc(var(--folder-index) * -8px)) 
-              rotateX(12deg);
+              translateX(calc(var(--folder-index) * 35px))
+              rotateY(-10deg);
           }
 
           .folder-wrapper:hover {
             transform: 
-              translateY(calc(var(--folder-index) * 20px - 4px)) 
-              translateZ(calc(var(--folder-index) * -8px + 10px)) 
-              rotateX(12deg) 
+              translateX(calc(var(--folder-index) * 35px))
+              translateY(-6px)
+              rotateY(-10deg)
               scale(1.01);
           }
         }
 
-        /* Animation for section entrance */
         .animate-in {
           opacity: 0;
           transform: translateY(30px);
@@ -297,7 +306,6 @@ const FileCabinet = () => {
           }
         }
 
-        /* Staggered folder entrance animation */
         .folder-wrapper {
           opacity: 0;
           animation: fadeInFolder 0.6s ease-out forwards;
