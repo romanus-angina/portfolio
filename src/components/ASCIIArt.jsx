@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { gsap } from 'gsap';
 
 /**
@@ -24,16 +24,43 @@ const ASCIIArt = ({
   className = '',
   onLoad = null,
   useColorVariations = true,
-  colorScheme = 'white' // 'white', 'green', 'blue', 'purple', 'orange', 'red', or custom object
+  colorScheme = 'white', // 'white', 'green', 'blue', 'purple', 'orange', 'red', or custom object
+  animationIntensity = 'medium', // 'low', 'medium', 'high'
+  disableAnimations = true, // Set to false to enable animations for performance
+  artStyle = null // 'classic', 'detailed', 'dense', 'blocks', 'lines', 'tech', 'organic', or null for cycling
 }) => {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
+  const animationsInitializedRef = useRef(false);
   const [asciiText, setAsciiText] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
   const [isError, setIsError] = useState(false);
   const [canvasReady, setCanvasReady] = useState(false);
   const [screenSize, setScreenSize] = useState({ width: 0, height: 0 });
   const [dynamicResolution, setDynamicResolution] = useState({ width: 120, height: 80 });
+  const [currentCharSetIndex, setCurrentCharSetIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Predefined character sets for different art styles
+  const characterSets = [
+    { name: 'Standard', chars: ' .:-=+*#%@', style: 'classic' },
+    { name: 'Detailed', chars: ' .\'`^",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$', style: 'detailed' },
+    { name: 'Dense', chars: ' .:-=+*#%@&$', style: 'dense' },
+    { name: 'Blocks', chars: ' ░▒▓█', style: 'blocks' },
+    { name: 'Lines', chars: ' │─┌┐└┘├┤┬┴┼', style: 'lines' },
+    { name: 'Tech', chars: ' .:;+=xX$&', style: 'tech' },
+    { name: 'Organic', chars: ' .\'`^",:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$', style: 'organic' }
+  ];
+
+  // Set initial character set based on artStyle prop
+  useEffect(() => {
+    if (artStyle) {
+      const styleIndex = characterSets.findIndex(set => set.style === artStyle);
+      if (styleIndex !== -1) {
+        setCurrentCharSetIndex(styleIndex);
+      }
+    }
+  }, [artStyle]);
 
   // Predefined color schemes
   const colorSchemes = {
@@ -165,6 +192,9 @@ const ASCIIArt = ({
     const finalWidth = width || dynamicResolution.width;
     const finalHeight = height || dynamicResolution.height;
     
+    // Get current character set
+    const currentCharSet = characterSets[currentCharSetIndex].chars;
+    
     console.log('ASCIIArt: Starting conversion...');
     console.log('Image path:', imagePath);
     console.log('Width:', finalWidth, 'Height:', finalHeight);
@@ -233,8 +263,8 @@ const ASCIIArt = ({
             const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
             
             // Use simple character selection for now
-            const charIndex = Math.floor((brightness / 255) * (asciiChars.length - 1));
-            ascii += asciiChars[charIndex];
+            const charIndex = Math.floor((brightness / 255) * (currentCharSet.length - 1));
+            ascii += currentCharSet[charIndex];
           }
           ascii += '\n';
         }
@@ -285,14 +315,16 @@ const ASCIIArt = ({
       console.log('ASCIIArt: Canvas is ready, starting conversion');
       convertImageToASCII();
     }
-  }, [canvasReady, dynamicResolution]); // Run when canvas becomes ready or resolution changes
+  }, [canvasReady, dynamicResolution, currentCharSetIndex]); // Run when canvas becomes ready, resolution changes, or character set changes
 
-  // Animate ASCII text on load
+  // Enhanced animation on load (only run once)
   useEffect(() => {
-    if (isLoaded && containerRef.current) {
+    if (isLoaded && containerRef.current && !disableAnimations && !animationsInitializedRef.current) {
+      animationsInitializedRef.current = true;
       const lines = containerRef.current.querySelectorAll('.ascii-line');
       
       if (lines.length > 0) {
+        // First animate lines appearing
         gsap.fromTo(lines, 
           { 
             opacity: 0, 
@@ -302,16 +334,199 @@ const ASCIIArt = ({
             opacity: 1, 
             y: 0,
             stagger: 0.05,
-            duration: 0.8,
-            ease: "power2.out"
+            duration: 0.6,
+            ease: "power2.out",
+            onComplete: () => {
+              // Then animate individual characters
+              animateCharacters();
+            }
           }
         );
       }
+    } else if (isLoaded && disableAnimations) {
+      // Just show the text immediately if animations are disabled
+      const lines = containerRef.current?.querySelectorAll('.ascii-line');
+      if (lines) {
+        gsap.set(lines, { opacity: 1, y: 0 });
+      }
     }
-  }, [isLoaded]);
+  }, [isLoaded, disableAnimations]);
+
+  // Cleanup animations on unmount
+  useEffect(() => {
+    return () => {
+      // Kill all GSAP animations when component unmounts
+      gsap.killTweensOf('.ascii-text');
+      gsap.killTweensOf('.ascii-char');
+      gsap.killTweensOf('.ascii-line');
+    };
+  }, []);
+
+  // Start continuous subtle animations based on intensity (optimized for performance)
+  const startContinuousAnimations = useCallback(() => {
+    if (disableAnimations) return;
+    
+    // Disable continuous animations for better performance
+    return;
+    
+    const characters = containerRef.current?.querySelectorAll('.ascii-char');
+    
+    if (characters && characters.length > 0) {
+      // Only animate a subset of characters for better performance
+      const maxAnimatedChars = Math.min(10, characters.length); // Further reduced to 10
+      const animatedChars = Array.from(characters).slice(0, maxAnimatedChars);
+      
+      // Get animation intensity settings (reduced for performance)
+      const intensitySettings = {
+        low: { brightness: 1.01, movement: 0.2, duration: 10 },
+        medium: { brightness: 1.02, movement: 0.3, duration: 8 },
+        high: { brightness: 1.03, movement: 0.4, duration: 6 }
+      };
+      
+      const settings = intensitySettings[animationIntensity] || intensitySettings.medium;
+      
+      // Single pulsing glow effect for the entire text (much more performant)
+      gsap.to('.ascii-text', {
+        filter: `brightness(${settings.brightness})`,
+        duration: settings.duration,
+        yoyo: true,
+        repeat: -1,
+        ease: 'sine.inOut'
+      });
+
+      // Only animate a few characters with subtle movement
+      animatedChars.forEach((char, index) => {
+        gsap.to(char, {
+          y: settings.movement * Math.sin(index * 0.3), // Reduced frequency
+          duration: settings.duration + (index * 0.2),
+          yoyo: true,
+          repeat: -1,
+          ease: 'sine.inOut',
+          delay: index * 0.2
+        });
+      });
+    }
+  }, [disableAnimations, animationIntensity]);
+
+  // Handle click to cycle through character sets (only when artStyle is null)
+  const handleClick = useCallback(() => {
+    if (artStyle) return; // Don't allow cycling when a specific art style is set
+    
+    const nextIndex = (currentCharSetIndex + 1) % characterSets.length;
+    setCurrentCharSetIndex(nextIndex);
+    
+    // Re-convert the image with the new character set
+    if (canvasRef.current && isLoaded) {
+      convertImageToASCII();
+    }
+  }, [currentCharSetIndex, characterSets.length, isLoaded, artStyle]);
+
+  // Handle hover for 3D rotation effects with momentum (optimized)
+  const handleMouseEnter = useCallback(() => {
+    console.log('🎯 MOUSE ENTER - Hover effect triggered!');
+    setIsHovered(true);
+    
+    if (!disableAnimations) {
+      console.log('🎯 Animations enabled, looking for ASCII text element...');
+      const asciiText = containerRef.current;
+      console.log('🎯 ASCII text element found:', !!asciiText);
+      if (asciiText) {
+        console.log('🎯 Starting GSAP rotation animation...');
+        
+        // Kill any existing animations first
+        gsap.killTweensOf(asciiText);
+        
+        // Set initial transform properties for GSAP
+        gsap.set(asciiText, {
+          transformOrigin: 'center center',
+          transformStyle: 'preserve-3d'
+        });
+        
+        // Set scale once, then animate only rotation
+        gsap.set(asciiText, { scale: 1.1 });
+        
+        // Smooth continuous Y-axis rotation only
+        gsap.to(asciiText, {
+          rotationY: '+=360', // Relative rotation for smooth continuous spinning
+          duration: 2,
+          ease: 'none',
+          repeat: -1,
+          onUpdate: () => {
+            console.log('🎯 Animation updating...', gsap.getProperty(asciiText, 'rotationY'));
+          }
+        });
+        console.log('🎯 GSAP animation started!');
+      }
+    } else {
+      console.log('🎯 Animations disabled');
+    }
+  }, [disableAnimations]);
+
+  const handleMouseLeave = useCallback(() => {
+    console.log('🎯 MOUSE LEAVE - Stopping hover effect');
+    setIsHovered(false);
+    
+    if (!disableAnimations) {
+      const asciiText = containerRef.current;
+      if (asciiText) {
+        console.log('🎯 Smooth ease-out to original position...');
+        // Smooth ease-out to original position
+        gsap.killTweensOf(asciiText);
+        gsap.to(asciiText, {
+          rotationY: 0,
+          scale: 1,
+          duration: 1.5,
+          ease: 'power3.out',
+          onComplete: () => {
+            console.log('🎯 Ease-out complete');
+          }
+        });
+      }
+    }
+  }, [disableAnimations]);
+
+  // Animate individual characters with sophisticated effects (optimized)
+  const animateCharacters = useCallback(() => {
+    const characters = containerRef.current?.querySelectorAll('.ascii-char');
+    
+    if (characters && characters.length > 0) {
+      // Get animation intensity settings
+      const intensitySettings = {
+        low: { rotation: 2, duration: 0.3, stagger: 0.3 },
+        medium: { rotation: 3, duration: 0.4, stagger: 0.5 },
+        high: { rotation: 5, duration: 0.6, stagger: 0.8 }
+      };
+      
+      const settings = intensitySettings[animationIntensity] || intensitySettings.medium;
+      
+      // Reset characters for animation
+      gsap.set(characters, {
+        opacity: 0,
+        scale: 0.9,
+        rotation: () => Math.random() * settings.rotation - (settings.rotation / 2),
+        transformOrigin: 'center center'
+      });
+
+      // Animate characters with optimized effects
+      gsap.to(characters, {
+        opacity: 1,
+        scale: 1,
+        rotation: 0,
+        duration: settings.duration,
+        stagger: {
+          amount: settings.stagger,
+          from: 'start'
+        },
+        ease: 'power2.out',
+        onComplete: () => {
+          // Start continuous subtle animations
+          startContinuousAnimations();
+        }
+      });
+    }
+  }, [animationIntensity, startContinuousAnimations]);
 
   // Always render the canvas, even in loading state
-  console.log('ASCIIArt: Rendering component, isLoaded:', isLoaded, 'isError:', isError);
 
   // Error state - simple fallback
   if (isError) {
@@ -328,7 +543,18 @@ const ASCIIArt = ({
   // Main ASCII art display
   return (
     <>
-      <div className={`ascii-art-container ${className}`}>
+      <div 
+        className={`ascii-art-container ${className} ${isHovered ? 'hovered' : ''}`}
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        style={{ cursor: artStyle ? 'default' : 'pointer' }}
+      >
+        {/* Character set indicator */}
+        <div className="char-set-indicator">
+          {artStyle ? `${characterSets[currentCharSetIndex].name} (${artStyle})` : characterSets[currentCharSetIndex].name}
+        </div>
+        
         <canvas ref={canvasCallbackRef} style={{ display: 'none' }} />
         
         {/* Loading overlay */}
@@ -351,7 +577,8 @@ const ASCIIArt = ({
               <div key={index} className="ascii-line">
                 {line.split('').map((char, charIndex) => {
                   // Calculate color based on character position in brightness range
-                  const charBrightness = (asciiChars.indexOf(char) / (asciiChars.length - 1)) * 255;
+                  const currentCharSet = characterSets[currentCharSetIndex].chars;
+                  const charBrightness = (currentCharSet.indexOf(char) / (currentCharSet.length - 1)) * 255;
                   const colorStyle = useColorVariations ? getColorForBrightness(charBrightness) : {};
                   
                   return (
@@ -378,6 +605,30 @@ const ASCIIArt = ({
           min-height: 200px;
           padding: 2rem;
           position: relative;
+          transition: all 0.3s ease;
+        }
+        
+        .char-set-indicator {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          background: rgba(40, 215, 255, 0.2);
+          color: #28D7FF;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 10px;
+          font-family: 'IBM Plex Mono', monospace;
+          border: 1px solid rgba(40, 215, 255, 0.3);
+          backdrop-filter: blur(10px);
+          z-index: 10;
+          opacity: 0.7;
+          transition: all 0.3s ease;
+        }
+        
+        .ascii-art-container:hover .char-set-indicator {
+          opacity: 1;
+          background: rgba(40, 215, 255, 0.3);
+          transform: scale(1.05);
         }
 
         .ascii-text {
@@ -393,23 +644,43 @@ const ASCIIArt = ({
           cursor: default;
           
           /* Simple 3D effect similar to point cloud */
-          transform: perspective(1000px) rotateX(5deg) rotateY(-2deg);
+          transform: perspective(1000px);
           transform-style: preserve-3d;
+          /* Remove transition to avoid conflicts with GSAP */
+          /* transition: transform 0.3s ease; */
           
-          /* Gentle floating animation */
-          animation: float3d 6s ease-in-out infinite;
+          /* Remove CSS animation to avoid conflicts with GSAP */
+          /* animation: float3d 6s ease-in-out infinite; */
+          
+          /* Ensure GSAP can animate this element */
+          will-change: transform;
         }
 
         .ascii-char {
           display: inline-block;
           transition: all 0.2s ease;
           cursor: pointer;
+          transform-style: preserve-3d;
         }
-
-        .ascii-char:hover {
-          transform: scale(1.2) translateZ(2px);
-          filter: brightness(1.3);
+        
+        /* Remove individual character hover effects to avoid conflicts with main rotation */
+        /* .ascii-char:hover {
+          transform: scale(1.3) translateZ(3px) rotate(2deg);
+          filter: brightness(1.5) drop-shadow(0 0 8px currentColor);
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          z-index: 10;
+        } */
+        
+        /* 3D rotation effects for hover state */
+        .ascii-art-container.hovered .ascii-char {
+          transform-style: preserve-3d;
+          transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .ascii-art-container.hovered .ascii-char:hover {
+          transform: scale(1.4) translateZ(5px) rotateY(15deg) rotateX(10deg);
+          filter: brightness(1.8) drop-shadow(0 0 12px currentColor);
+          z-index: 20;
         }
 
         .ascii-line {
@@ -473,12 +744,7 @@ const ASCIIArt = ({
           }
         }
 
-        /* Hover effects */
-        .ascii-art-container:hover .ascii-text {
-          transform: perspective(1000px) rotateX(2deg) rotateY(-1deg) translateY(-10px) scale(1.05);
-          filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.5));
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        /* Hover effects - now handled by GSAP */
 
         /* Responsive design with dynamic resolution */
         @media (max-width: 1200px) {
@@ -515,11 +781,7 @@ const ASCIIArt = ({
           }
         }
 
-        /* Hover effects */
-        .ascii-art-container:hover .ascii-text {
-          filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.5));
-          transition: filter 0.3s ease;
-        }
+        /* Hover effects - now handled by GSAP */
 
         /* Reduced motion support */
         @media (prefers-reduced-motion: reduce) {
