@@ -707,19 +707,17 @@ const ASCIIArt = ({
       willChange: 'transform'
     });
     
-    // Set scale once, then animate only rotation
-    gsap.set(asciiText, { scale: 1.05 }); // Reduced scale for better performance
-    
-    // Smooth 3D rotation using timeline for seamless looping
-    const tl = gsap.timeline({ repeat: -1 });
-    
-    tl.to(asciiText, {
+    // Clean 3D rotation - single animation with proper reset
+    gsap.to(asciiText, {
       rotationY: 360,
       rotationX: 2,
+      scale: 1.05,
       duration: 3,
       ease: 'none',
-      onComplete: () => {
-        // Reset to 0 for seamless loop
+      repeat: -1,
+      yoyo: false,
+      onRepeat: () => {
+        // Reset to 0 at start of each repeat cycle
         gsap.set(asciiText, { rotationY: 0 });
       }
     });
@@ -978,8 +976,7 @@ const ASCIIArt = ({
           
           /* 3D transform optimizations for smooth rotation */
           transform-style: preserve-3d;
-          backface-visibility: visible;
-          perspective: 1000px;
+          perspective: 800px;
           
           /* Ensure GSAP can animate this element smoothly */
           will-change: transform;
