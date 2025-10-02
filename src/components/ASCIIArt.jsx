@@ -644,7 +644,7 @@ const ASCIIArt = ({
           cursor: default;
           
           /* Simple 3D effect similar to point cloud */
-          transform: perspective(1000px);
+          /* transform: perspective(1000px); - Removed to prevent tilting */
           transform-style: preserve-3d;
           /* Remove transition to avoid conflicts with GSAP */
           /* transition: transform 0.3s ease; */
@@ -654,7 +654,7 @@ const ASCIIArt = ({
           
           /* Ensure GSAP can animate this element */
           will-change: transform;
-        }
+        }z
 
         .ascii-char {
           display: inline-block;
@@ -671,8 +671,8 @@ const ASCIIArt = ({
           z-index: 10;
         } */
         
-        /* 3D rotation effects for hover state */
-        .ascii-art-container.hovered .ascii-char {
+        /* Remove individual character hover effects to avoid conflicts with main rotation */
+        /* .ascii-art-container.hovered .ascii-char {
           transform-style: preserve-3d;
           transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -681,7 +681,7 @@ const ASCIIArt = ({
           transform: scale(1.4) translateZ(5px) rotateY(15deg) rotateX(10deg);
           filter: brightness(1.8) drop-shadow(0 0 12px currentColor);
           z-index: 20;
-        }
+        } */
 
         .ascii-line {
           display: block;
