@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo, useLayoutEffect } from 'react';
 import { gsap } from 'gsap';
 
 /**
@@ -40,6 +40,23 @@ const ASCIIArt = ({
   const [dynamicResolution, setDynamicResolution] = useState({ width: 120, height: 80 });
   const [currentCharSetIndex, setCurrentCharSetIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Performance optimization refs
+  const animationFrameRef = useRef(null);
+  const isAnimatingRef = useRef(false);
+  const lastHoverTimeRef = useRef(0);
+  const cachedAsciiRef = useRef(new Map()); // Cache ASCII conversions by image path + resolution + char set
+  const imageCacheRef = useRef(new Map()); // Cache loaded images
+  const observerRef = useRef(null);
+  const isMobileRef = useRef(false);
+  const performanceMetricsRef = useRef({
+    conversionTime: 0,
+    cacheHits: 0,
+    cacheMisses: 0,
+    renderTime: 0
+  });
 
   // Predefined character sets for different art styles
   const characterSets = [
@@ -171,6 +188,10 @@ const ASCIIArt = ({
       };
       setScreenSize(newScreenSize);
       
+      // Detect mobile device
+      isMobileRef.current = newScreenSize.width <= 768 || 
+        /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
       // Calculate new resolution based on screen size
       const newResolution = calculateDynamicResolution(newScreenSize.width, newScreenSize.height);
       setDynamicResolution(newResolution);
@@ -179,15 +200,32 @@ const ASCIIArt = ({
     // Initial screen size
     updateScreenSize();
 
-    // Add resize listener
-    window.addEventListener('resize', updateScreenSize);
+    // Add resize listener with throttling
+    let resizeTimeout;
+    const throttledResize = () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(updateScreenSize, 100);
+    };
+    
+    window.addEventListener('resize', throttledResize);
 
     // Cleanup
-    return () => window.removeEventListener('resize', updateScreenSize);
+    return () => {
+      window.removeEventListener('resize', throttledResize);
+      clearTimeout(resizeTimeout);
+    };
   }, []);
 
-  // Convert image to ASCII using HTML5 Canvas
-  const convertImageToASCII = async () => {
+  // Convert image to ASCII using HTML5 Canvas with caching
+  const convertImageToASCII = useCallback(async () => {
+    const startTime = performance.now();
+    
+    // Prevent multiple simultaneous loads
+    if (isLoading) {
+      console.log('Image already loading, skipping...');
+      return;
+    }
+    
     // Use dynamic resolution or fallback to props
     const finalWidth = width || dynamicResolution.width;
     const finalHeight = height || dynamicResolution.height;
@@ -195,116 +233,161 @@ const ASCIIArt = ({
     // Get current character set
     const currentCharSet = characterSets[currentCharSetIndex].chars;
     
-    console.log('ASCIIArt: Starting conversion...');
-    console.log('Image path:', imagePath);
-    console.log('Width:', finalWidth, 'Height:', finalHeight);
-    console.log('Screen size:', screenSize);
-    console.log('Dynamic resolution:', dynamicResolution);
+    // Create cache key
+    const cacheKey = `${imagePath}-${finalWidth}x${finalHeight}-${currentCharSetIndex}-${colorScheme}`;
+    
+    // Check cache first
+    if (cachedAsciiRef.current.has(cacheKey)) {
+      performanceMetricsRef.current.cacheHits++;
+      const cachedResult = cachedAsciiRef.current.get(cacheKey);
+      setAsciiText(cachedResult);
+      setIsLoaded(true);
+      if (onLoad) {
+        onLoad(cachedResult);
+      }
+      return;
+    }
+    
+    performanceMetricsRef.current.cacheMisses++;
     
     const canvas = canvasRef.current;
     if (!canvas) {
-      console.log('ASCIIArt: Canvas not ready');
+      console.error('Canvas not ready for image conversion');
       return;
     }
+    
+    setIsLoading(true);
 
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     
-    // Set a timeout to prevent infinite loading
-    const timeout = setTimeout(() => {
-      console.log('ASCIIArt: Image load timeout after 3 seconds');
-      setIsError(true);
-    }, 3000);
+    // Check if image is already cached
+    let img = imageCacheRef.current.get(imagePath);
     
-    img.onload = () => {
-      console.log('ASCIIArt: Image loaded successfully');
-      clearTimeout(timeout);
+    if (!img) {
+      img = new Image();
+      imageCacheRef.current.set(imagePath, img);
       
-      try {
-        // Calculate aspect ratio and set canvas size
-        const aspectRatio = img.width / img.height;
-        let canvasWidth = finalWidth;
-        let canvasHeight = finalHeight;
-        
-        // Maintain aspect ratio
-        if (aspectRatio > 1) {
-          // Image is wider than tall
-          canvasHeight = Math.round(finalWidth / aspectRatio);
-        } else {
-          // Image is taller than wide
-          canvasWidth = Math.round(finalHeight * aspectRatio);
-        }
-        
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
-        console.log('Canvas size set to:', canvasWidth, 'x', canvasHeight);
-        console.log('Original image aspect ratio:', aspectRatio);
-        
-        // Draw image to canvas maintaining aspect ratio
-        ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
-        console.log('Image drawn to canvas');
-        
-        // Get image data using actual canvas dimensions
-        const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
-        const data = imageData.data;
-        console.log('Image data length:', data.length);
-        console.log('Processing dimensions:', canvasWidth, 'x', canvasHeight);
-        
-        // Convert to ASCII using enhanced character selection
-        let ascii = '';
-        for (let y = 0; y < canvasHeight; y += 2) { // Skip every other row
-          for (let x = 0; x < canvasWidth; x += 1) {
-            const index = (y * canvasWidth + x) * 4;
-            const r = data[index];
-            const g = data[index + 1];
-            const b = data[index + 2];
-            
-            // Calculate brightness using standard luminance formula
-            const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
-            
-            // Use simple character selection for now
-            const charIndex = Math.floor((brightness / 255) * (currentCharSet.length - 1));
-            ascii += currentCharSet[charIndex];
-          }
-          ascii += '\n';
-        }
-        
-        console.log('ASCII conversion complete!');
-        console.log('ASCII length:', ascii.length);
-        console.log('First 100 chars:', ascii.substring(0, 100));
-        
-        setAsciiText(ascii);
-        setIsLoaded(true);
-        
-        if (onLoad) {
-          onLoad(ascii);
-        }
-      } catch (error) {
-        console.error('Error converting image to ASCII:', error);
+      // Set a timeout to prevent infinite loading
+      const timeout = setTimeout(() => {
+        console.error('Image loading timeout after 10 seconds:', imagePath);
+        setIsLoading(false);
         setIsError(true);
+      }, 10000); // Increased timeout to 10 seconds
+      
+      img.onload = () => {
+        console.log('Image loaded successfully:', imagePath);
+        clearTimeout(timeout);
+        setIsLoading(false);
+        processImageToASCII(img, finalWidth, finalHeight, currentCharSet, cacheKey, startTime);
+      };
+      
+      img.onerror = (error) => {
+        console.error('Error loading image:', imagePath, error);
+        console.error('Image load failed. Check if file exists at:', imagePath);
+        clearTimeout(timeout);
+        setIsLoading(false);
+        setIsError(true);
+      };
+      
+      console.log('Starting to load image:', imagePath);
+      // Add crossOrigin to handle potential CORS issues
+      img.crossOrigin = 'anonymous';
+      img.src = imagePath;
+    } else if (img.complete && img.naturalWidth > 0) {
+      // Image already loaded, process immediately
+      console.log('Using cached image:', imagePath);
+      processImageToASCII(img, finalWidth, finalHeight, currentCharSet, cacheKey, startTime);
+    } else {
+      // Image is loading, wait for it
+      console.log('Image is already loading, waiting...', imagePath);
+      img.onload = () => {
+        console.log('Cached image loaded successfully:', imagePath);
+        processImageToASCII(img, finalWidth, finalHeight, currentCharSet, cacheKey, startTime);
+      };
+    }
+  }, [imagePath, width, height, dynamicResolution, currentCharSetIndex, colorScheme, onLoad, isLoading]);
+
+  // Process image to ASCII (separated for better performance)
+  const processImageToASCII = useCallback((img, finalWidth, finalHeight, currentCharSet, cacheKey, startTime) => {
+    try {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      
+      // Calculate aspect ratio and set canvas size
+      const aspectRatio = img.width / img.height;
+      let canvasWidth = finalWidth;
+      let canvasHeight = finalHeight;
+      
+      // Maintain aspect ratio
+      if (aspectRatio > 1) {
+        // Image is wider than tall
+        canvasHeight = Math.round(finalWidth / aspectRatio);
+      } else {
+        // Image is taller than wide
+        canvasWidth = Math.round(finalHeight * aspectRatio);
       }
-    };
-    
-    img.onerror = (error) => {
-      console.error('Error loading image:', imagePath, error);
-      clearTimeout(timeout);
+      
+      canvas.width = canvasWidth;
+      canvas.height = canvasHeight;
+      
+      // Draw image to canvas maintaining aspect ratio
+      ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+      
+      // Get image data using actual canvas dimensions
+      const imageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
+      const data = imageData.data;
+      
+      // Convert to ASCII using enhanced character selection
+      let ascii = '';
+      
+      // Optimize for mobile: reduce processing
+      const stepY = isMobileRef.current ? 3 : 2; // Skip more rows on mobile
+      const stepX = isMobileRef.current ? 2 : 1; // Skip more columns on mobile
+      
+      for (let y = 0; y < canvasHeight; y += stepY) {
+        for (let x = 0; x < canvasWidth; x += stepX) {
+          const index = (y * canvasWidth + x) * 4;
+          const r = data[index];
+          const g = data[index + 1];
+          const b = data[index + 2];
+          
+          // Calculate brightness using standard luminance formula
+          const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+          
+          // Use simple character selection for now
+          const charIndex = Math.floor((brightness / 255) * (currentCharSet.length - 1));
+          ascii += currentCharSet[charIndex];
+        }
+        ascii += '\n';
+      }
+      
+      // Cache the result
+      cachedAsciiRef.current.set(cacheKey, ascii);
+      
+      // Track performance
+      const endTime = performance.now();
+      performanceMetricsRef.current.conversionTime = endTime - startTime;
+      
+      setAsciiText(ascii);
+      setIsLoaded(true);
+      
+      if (onLoad) {
+        onLoad(ascii);
+      }
+    } catch (error) {
+      console.error('Error converting image to ASCII:', error);
       setIsError(true);
-    };
-    
-    console.log('Setting image source to:', imagePath);
-    img.src = imagePath;
-  };
+    }
+  }, [onLoad]);
 
   // Canvas callback ref
   const canvasCallbackRef = useCallback((node) => {
-    console.log('ASCIIArt: Canvas callback called with node:', node);
     if (node) {
-      console.log('ASCIIArt: Canvas element received', node);
-      console.log('ASCIIArt: Canvas dimensions:', node.width, 'x', node.height);
       canvasRef.current = node;
       setCanvasReady(true);
     } else {
-      console.log('ASCIIArt: Canvas element removed');
       setCanvasReady(false);
     }
   }, []);
@@ -312,59 +395,157 @@ const ASCIIArt = ({
   // Initialize ASCII conversion when canvas is ready or resolution changes
   useEffect(() => {
     if (canvasReady && canvasRef.current) {
-      console.log('ASCIIArt: Canvas is ready, starting conversion');
       convertImageToASCII();
     }
-  }, [canvasReady, dynamicResolution, currentCharSetIndex]); // Run when canvas becomes ready, resolution changes, or character set changes
+  }, [canvasReady, dynamicResolution, currentCharSetIndex, convertImageToASCII]); // Run when canvas becomes ready, resolution changes, or character set changes
 
-  // Enhanced animation on load (only run once)
+  // Intersection Observer for lazy loading
+  useEffect(() => {
+    // For now, set visible immediately to ensure ASCII art loads
+    // TODO: Re-implement proper lazy loading once basic functionality is working
+    setIsVisible(true);
+    
+    // Set up observer for future lazy loading implementation
+    const setupObserver = () => {
+      if (!observerRef.current && containerRef.current) {
+        observerRef.current = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                setIsVisible(true);
+                observerRef.current?.unobserve(entry.target);
+              }
+            });
+          },
+          { 
+            threshold: 0.1, 
+            rootMargin: isMobileRef.current ? '100px' : '50px'
+          }
+        );
+        
+        // Start observing
+        observerRef.current.observe(containerRef.current);
+      }
+    };
+
+    // Try to set up observer after a delay
+    const timeout = setTimeout(setupObserver, 500);
+    
+    // Cleanup
+    return () => {
+      clearTimeout(timeout);
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, []);
+
+  // Enhanced line-by-line animation on load
   useEffect(() => {
     if (isLoaded && containerRef.current && !disableAnimations && !animationsInitializedRef.current) {
       animationsInitializedRef.current = true;
       const lines = containerRef.current.querySelectorAll('.ascii-line');
       
       if (lines.length > 0) {
-        // First animate lines appearing
-        gsap.fromTo(lines, 
-          { 
-            opacity: 0, 
-            y: 20
+        // Convert NodeList to Array
+        const linesArray = Array.from(lines);
+        
+        // Optimize animations for mobile
+        const isMobile = isMobileRef.current;
+        const staggerDelay = isMobile ? 0.15 : 0.08; // Slightly slower for better line-by-line effect
+        const duration = isMobile ? 0.5 : 0.7; // Longer duration for smoother effect
+        const maxLines = isMobile ? Math.min(8, linesArray.length) : linesArray.length; // More lines on mobile for line-by-line
+        
+        // Set initial state for all lines
+        gsap.set(linesArray, {
+          opacity: 0,
+          y: isMobile ? 15 : 25,
+          scale: 0.95,
+          rotationX: isMobile ? 5 : 10,
+          transformOrigin: 'center center'
+        });
+        
+        // Animate lines appearing one by one with enhanced effects
+        gsap.to(linesArray.slice(0, maxLines), {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          rotationX: 0,
+          duration: duration,
+          stagger: {
+            amount: staggerDelay * maxLines, // Total stagger time
+            from: "start"
           },
-          { 
-            opacity: 1, 
-            y: 0,
-            stagger: 0.05,
-            duration: 0.6,
-            ease: "power2.out",
-            onComplete: () => {
-              // Then animate individual characters
-              animateCharacters();
-            }
-          }
-        );
+          ease: "power2.out",
+        });
       }
     } else if (isLoaded && disableAnimations) {
       // Just show the text immediately if animations are disabled
       const lines = containerRef.current?.querySelectorAll('.ascii-line');
       if (lines) {
-        gsap.set(lines, { opacity: 1, y: 0 });
+        gsap.set(lines, { opacity: 1, y: 0, scale: 1, rotationX: 0 });
       }
     }
   }, [isLoaded, disableAnimations]);
 
-  // Cleanup animations on unmount
+  // Cleanup animations and observers on unmount
   useEffect(() => {
     return () => {
-      // Kill all GSAP animations when component unmounts
+      // Cleanup animations
       gsap.killTweensOf('.ascii-text');
       gsap.killTweensOf('.ascii-char');
       gsap.killTweensOf('.ascii-line');
+      
+      // Cleanup intersection observer
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+      
+      // Cleanup animation frame
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      
+      // Reset animation state
+      isAnimatingRef.current = false;
+      
+      // Memory cleanup - clear caches if they get too large
+      if (cachedAsciiRef.current.size > 50) {
+        cachedAsciiRef.current.clear();
+      }
+      
+      if (imageCacheRef.current.size > 20) {
+        imageCacheRef.current.clear();
+      }
     };
   }, []);
 
-  // Start continuous subtle animations based on intensity (optimized for performance)
+  // Periodic memory cleanup
+  useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      // Clear old cache entries if memory usage is high
+      if (cachedAsciiRef.current.size > 100) {
+        const entries = Array.from(cachedAsciiRef.current.entries());
+        // Keep only the most recent 50 entries
+        cachedAsciiRef.current.clear();
+        entries.slice(-50).forEach(([key, value]) => {
+          cachedAsciiRef.current.set(key, value);
+        });
+      }
+      
+      // Clear image cache if it gets too large
+      if (imageCacheRef.current.size > 30) {
+        imageCacheRef.current.clear();
+      }
+    }, 60000); // Run every minute
+    
+    return () => clearInterval(cleanupInterval);
+  }, []);
+
+  // Start continuous subtle animations based on intensity (disabled for performance)
   const startContinuousAnimations = useCallback(() => {
-    if (disableAnimations) return;
+    // Disabled for maximum performance
+    return;
     
     // Disable continuous animations for better performance
     return;
@@ -408,9 +589,70 @@ const ASCIIArt = ({
     }
   }, [disableAnimations, animationIntensity]);
 
-  // Handle click to cycle through character sets (only when artStyle is null)
+  // Trigger line-by-line animation on click
+  const triggerLineByLineAnimation = useCallback(() => {
+    if (disableAnimations) return;
+    
+    const lines = containerRef.current?.querySelectorAll('.ascii-line');
+    if (!lines || lines.length === 0) return;
+    
+    const linesArray = Array.from(lines);
+    const isMobile = isMobileRef.current;
+    
+    // Reset all lines
+    gsap.set(linesArray, {
+      opacity: 0,
+      y: 20,
+      scale: 0.9,
+      rotationX: 15
+    });
+    
+    // Animate lines one by one
+    gsap.to(linesArray, {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      rotationX: 0,
+      duration: isMobile ? 0.4 : 0.6,
+      stagger: {
+        amount: isMobile ? 0.1 : 0.05,
+        from: "start"
+      },
+      ease: "back.out(1.7)"
+    });
+  }, [disableAnimations]);
+
+  // Trigger wave effect animation
+  const triggerWaveAnimation = useCallback(() => {
+    if (disableAnimations) return;
+    
+    const lines = containerRef.current?.querySelectorAll('.ascii-line');
+    if (!lines || lines.length === 0) return;
+    
+    const linesArray = Array.from(lines);
+    const isMobile = isMobileRef.current;
+    
+    // Create wave effect
+    linesArray.forEach((line, index) => {
+      gsap.to(line, {
+        y: -5,
+        scale: 1.05,
+        duration: 0.3,
+        delay: index * 0.05,
+        yoyo: true,
+        repeat: 1,
+        ease: "power2.inOut"
+      });
+    });
+  }, [disableAnimations]);
+
+  // Handle click to cycle through character sets and trigger animations
   const handleClick = useCallback(() => {
-    if (artStyle) return; // Don't allow cycling when a specific art style is set
+    if (artStyle) {
+      // If art style is fixed, just trigger line-by-line animation
+      triggerLineByLineAnimation();
+      return;
+    }
     
     const nextIndex = (currentCharSetIndex + 1) % characterSets.length;
     setCurrentCharSetIndex(nextIndex);
@@ -419,96 +661,129 @@ const ASCIIArt = ({
     if (canvasRef.current && isLoaded) {
       convertImageToASCII();
     }
-  }, [currentCharSetIndex, characterSets.length, isLoaded, artStyle]);
+    
+    // Trigger line-by-line animation after a short delay
+    setTimeout(() => {
+      triggerLineByLineAnimation();
+    }, 100);
+  }, [currentCharSetIndex, characterSets.length, isLoaded, artStyle, triggerLineByLineAnimation]);
 
-  // Handle hover for 3D rotation effects with momentum (optimized)
+  // Handle double-click for wave effect
+  const handleDoubleClick = useCallback(() => {
+    triggerWaveAnimation();
+  }, [triggerWaveAnimation]);
+
+  // Handle hover for 3D rotation effects with performance optimizations
   const handleMouseEnter = useCallback(() => {
-    console.log('🎯 MOUSE ENTER - Hover effect triggered!');
+    if (disableAnimations || isAnimatingRef.current) {
+      return;
+    }
+    
+    // Disable hover effects on mobile for better performance
+    if (isMobileRef.current) {
+      return;
+    }
+    
+    const now = Date.now();
+    if (now - lastHoverTimeRef.current < 200) {
+      return; // Throttle rapid hover events
+    }
+    lastHoverTimeRef.current = now;
+    
+    const asciiText = containerRef.current;
+    if (!asciiText) return;
+    
+    isAnimatingRef.current = true;
     setIsHovered(true);
     
-    if (!disableAnimations) {
-      console.log('🎯 Animations enabled, looking for ASCII text element...');
-      const asciiText = containerRef.current;
-      console.log('🎯 ASCII text element found:', !!asciiText);
-      if (asciiText) {
-        console.log('🎯 Starting GSAP rotation animation...');
-        
-        // Kill any existing animations first
-        gsap.killTweensOf(asciiText);
-        
-        // Set initial transform properties for GSAP
-        gsap.set(asciiText, {
-          transformOrigin: 'center center',
-          transformStyle: 'preserve-3d'
-        });
-        
-        // Set scale once, then animate only rotation
-        gsap.set(asciiText, { scale: 1.1 });
-        
-        // Smooth continuous Y-axis rotation only
-        gsap.to(asciiText, {
-          rotationY: '+=360', // Relative rotation for smooth continuous spinning
-          duration: 2,
-          ease: 'none',
-          repeat: -1,
-          onUpdate: () => {
-            console.log('🎯 Animation updating...', gsap.getProperty(asciiText, 'rotationY'));
-          }
-        });
-        console.log('🎯 GSAP animation started!');
+    // Kill any existing animations first
+    gsap.killTweensOf(asciiText);
+    gsap.killTweensOf(asciiText.querySelectorAll('.ascii-line'));
+    
+    // Set initial transform properties for GSAP
+    gsap.set(asciiText, {
+      transformOrigin: 'center center',
+      transformStyle: 'preserve-3d',
+      willChange: 'transform'
+    });
+    
+    // Set scale once, then animate only rotation
+    gsap.set(asciiText, { scale: 1.05 }); // Reduced scale for better performance
+    
+    // Smooth 3D rotation using timeline for seamless looping
+    const tl = gsap.timeline({ repeat: -1 });
+    
+    tl.to(asciiText, {
+      rotationY: 360,
+      rotationX: 2,
+      duration: 3,
+      ease: 'none',
+      onComplete: () => {
+        // Reset to 0 for seamless loop
+        gsap.set(asciiText, { rotationY: 0 });
       }
-    } else {
-      console.log('🎯 Animations disabled');
-    }
+    });
   }, [disableAnimations]);
 
   const handleMouseLeave = useCallback(() => {
-    console.log('🎯 MOUSE LEAVE - Stopping hover effect');
+    if (disableAnimations || !isAnimatingRef.current) {
+      return;
+    }
+    
+    const asciiText = containerRef.current;
+    if (!asciiText) return;
+    
+    isAnimatingRef.current = false;
     setIsHovered(false);
     
-    if (!disableAnimations) {
-      const asciiText = containerRef.current;
-      if (asciiText) {
-        console.log('🎯 Smooth ease-out to original position...');
-        // Smooth ease-out to original position
-        gsap.killTweensOf(asciiText);
-        gsap.to(asciiText, {
-          rotationY: 0,
-          scale: 1,
-          duration: 1.5,
-          ease: 'power3.out',
-          onComplete: () => {
-            console.log('🎯 Ease-out complete');
-          }
-        });
+    // Kill all animations
+    gsap.killTweensOf(asciiText);
+    
+    // Get current rotation and complete to next 360° mark
+    const currentRotation = gsap.getProperty(asciiText, "rotationY") || 0;
+    const targetRotation = Math.ceil(currentRotation / 360) * 360;
+    
+    // Smooth completion
+    gsap.to(asciiText, {
+      rotationY: targetRotation,
+      rotationX: 0,
+      scale: 1,
+      duration: 1.5,
+      ease: "power2.out",
+      onComplete: () => {
+        gsap.set(asciiText, { rotationY: 0, rotationX: 0, scale: 1 });
       }
-    }
+    });
   }, [disableAnimations]);
 
-  // Animate individual characters with sophisticated effects (optimized)
+  // Animate individual characters with sophisticated effects
   const animateCharacters = useCallback(() => {
     const characters = containerRef.current?.querySelectorAll('.ascii-char');
     
     if (characters && characters.length > 0) {
+      // Limit characters for performance
+      const maxChars = isMobileRef.current ? 50 : 100;
+      const charsToAnimate = Array.from(characters).slice(0, maxChars);
+      
       // Get animation intensity settings
       const intensitySettings = {
-        low: { rotation: 2, duration: 0.3, stagger: 0.3 },
-        medium: { rotation: 3, duration: 0.4, stagger: 0.5 },
-        high: { rotation: 5, duration: 0.6, stagger: 0.8 }
+        low: { rotation: 1, duration: 0.2, stagger: 0.1 },
+        medium: { rotation: 2, duration: 0.3, stagger: 0.15 },
+        high: { rotation: 3, duration: 0.4, stagger: 0.2 }
       };
       
       const settings = intensitySettings[animationIntensity] || intensitySettings.medium;
       
       // Reset characters for animation
-      gsap.set(characters, {
+      gsap.set(charsToAnimate, {
         opacity: 0,
-        scale: 0.9,
+        scale: 0.8,
         rotation: () => Math.random() * settings.rotation - (settings.rotation / 2),
         transformOrigin: 'center center'
       });
 
       // Animate characters with optimized effects
-      gsap.to(characters, {
+      gsap.to(charsToAnimate, {
         opacity: 1,
         scale: 1,
         rotation: 0,
@@ -517,16 +792,28 @@ const ASCIIArt = ({
           amount: settings.stagger,
           from: 'start'
         },
-        ease: 'power2.out',
-        onComplete: () => {
-          // Start continuous subtle animations
-          startContinuousAnimations();
-        }
+        ease: 'power2.out'
       });
     }
-  }, [animationIntensity, startContinuousAnimations]);
+  }, [animationIntensity]);
 
-  // Always render the canvas, even in loading state
+  // Performance monitoring (development only)
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development' && isLoaded) {
+      const totalRequests = performanceMetricsRef.current.cacheHits + performanceMetricsRef.current.cacheMisses;
+      const cacheHitRate = totalRequests > 0 ? (performanceMetricsRef.current.cacheHits / totalRequests) * 100 : 0;
+      
+      console.log('ASCII Art Performance Metrics:', {
+        conversionTime: `${performanceMetricsRef.current.conversionTime.toFixed(2)}ms`,
+        cacheHits: performanceMetricsRef.current.cacheHits,
+        cacheMisses: performanceMetricsRef.current.cacheMisses,
+        cacheHitRate: `${cacheHitRate.toFixed(1)}%`,
+        isMobile: isMobileRef.current,
+        isVisible,
+        resolution: `${dynamicResolution.width}x${dynamicResolution.height}`
+      });
+    }
+  }, [isLoaded, isVisible, dynamicResolution]);
 
   // Error state - simple fallback
   if (isError) {
@@ -544,8 +831,10 @@ const ASCIIArt = ({
   return (
     <>
       <div 
+        ref={containerRef}
         className={`ascii-art-container ${className} ${isHovered ? 'hovered' : ''}`}
         onClick={handleClick}
+        onDoubleClick={handleDoubleClick}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         style={{ cursor: artStyle ? 'default' : 'pointer' }}
@@ -572,14 +861,15 @@ const ASCIIArt = ({
         
         {/* ASCII text display */}
         {isLoaded && (
-          <div ref={containerRef} className="ascii-text">
+          <div className="ascii-text">
             {asciiText.split('\n').map((line, index) => (
               <div key={index} className="ascii-line">
                 {line.split('').map((char, charIndex) => {
-                  // Calculate color based on character position in brightness range
-                  const currentCharSet = characterSets[currentCharSetIndex].chars;
-                  const charBrightness = (currentCharSet.indexOf(char) / (currentCharSet.length - 1)) * 255;
-                  const colorStyle = useColorVariations ? getColorForBrightness(charBrightness) : {};
+                  // Simplified rendering for performance
+                  const colorStyle = useColorVariations ? getColorForBrightness(
+                    (characterSets[currentCharSetIndex].chars.indexOf(char) / 
+                     (characterSets[currentCharSetIndex].chars.length - 1)) * 255
+                  ) : {};
                   
                   return (
                     <span 
@@ -608,6 +898,42 @@ const ASCIIArt = ({
           transition: all 0.3s ease;
         }
         
+        .ascii-art-container.lazy-loading {
+          min-height: 150px;
+          background: rgba(40, 215, 255, 0.05);
+          border: 1px dashed rgba(40, 215, 255, 0.2);
+          border-radius: 8px;
+        }
+        
+        .ascii-lazy-placeholder {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 1rem;
+          color: #28D7FF;
+          opacity: 0.7;
+        }
+        
+        .lazy-loading-icon {
+          position: relative;
+          width: 40px;
+          height: 40px;
+        }
+        
+        .loading-spinner {
+          width: 100%;
+          height: 100%;
+          border: 2px solid rgba(40, 215, 255, 0.2);
+          border-top: 2px solid #28D7FF;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
         .char-set-indicator {
           position: absolute;
           top: 10px;
@@ -623,6 +949,13 @@ const ASCIIArt = ({
           z-index: 10;
           opacity: 0.7;
           transition: all 0.3s ease;
+        }
+        
+        .char-set-indicator::after {
+          content: ' (Click: cycle, Double-click: wave)';
+          font-size: 8px;
+          opacity: 0.6;
+          margin-left: 4px;
         }
         
         .ascii-art-container:hover .char-set-indicator {
@@ -643,24 +976,34 @@ const ASCIIArt = ({
           user-select: none;
           cursor: default;
           
-          /* Simple 3D effect similar to point cloud */
-          /* transform: perspective(1000px); - Removed to prevent tilting */
+          /* 3D transform optimizations for smooth rotation */
           transform-style: preserve-3d;
-          /* Remove transition to avoid conflicts with GSAP */
-          /* transition: transform 0.3s ease; */
+          backface-visibility: visible;
+          perspective: 1000px;
           
-          /* Remove CSS animation to avoid conflicts with GSAP */
-          /* animation: float3d 6s ease-in-out infinite; */
-          
-          /* Ensure GSAP can animate this element */
+          /* Ensure GSAP can animate this element smoothly */
           will-change: transform;
-        }z
+          
+          /* Hardware acceleration for smoother animations */
+          transform: translateZ(0);
+          -webkit-transform: translateZ(0);
+        }
+
+        .ascii-line {
+          display: block;
+          transform-style: preserve-3d;
+          will-change: transform, opacity;
+          /* Remove transition to avoid conflicts with GSAP */
+          /* transition: all 0.2s ease; */
+        }
 
         .ascii-char {
           display: inline-block;
-          transition: all 0.2s ease;
           cursor: pointer;
           transform-style: preserve-3d;
+          will-change: transform;
+          /* Remove transition to avoid conflicts with GSAP */
+          /* transition: all 0.2s ease; */
         }
         
         /* Remove individual character hover effects to avoid conflicts with main rotation */
@@ -762,6 +1105,25 @@ const ASCIIArt = ({
             padding: 1rem;
             min-height: 150px;
           }
+          
+          /* Disable hover effects on mobile */
+          .ascii-art-container:hover {
+            transform: none;
+          }
+          
+          .ascii-art-container:hover .char-set-indicator {
+            opacity: 0.7;
+            transform: none;
+          }
+          
+          /* Reduce animation complexity on mobile */
+          .ascii-line {
+            transition: none;
+          }
+          
+          .ascii-char {
+            transition: none;
+          }
         }
 
         @media (max-width: 480px) {
@@ -773,11 +1135,25 @@ const ASCIIArt = ({
             padding: 0.5rem;
             min-height: 120px;
           }
+          
+          .ascii-lazy-placeholder {
+            font-size: 0.9rem;
+          }
+          
+          .lazy-loading-icon {
+            width: 30px;
+            height: 30px;
+          }
         }
 
         @media (max-width: 320px) {
           .ascii-text {
             font-size: 4px;
+          }
+          
+          .ascii-art-container {
+            padding: 0.25rem;
+            min-height: 100px;
           }
         }
 

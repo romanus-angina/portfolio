@@ -44,6 +44,7 @@ export default function Home() {
                 artStyle="classic"
                 colorScheme="white"
                 className="folder-ascii"
+                disableAnimations={true}
               />
             </div>
             
@@ -56,6 +57,7 @@ export default function Home() {
                 artStyle="tech"
                 colorScheme="green"
                 className="folder-ascii"
+                disableAnimations={true}
               />
             </div>
           </div>
