@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { gsap } from 'gsap';
 import { FaGithub, FaLinkedin, FaFileAlt, FaEnvelope } from 'react-icons/fa';
-import PointCloud from './PointCloud';
 
 const LargeSidebar = ({ activeSection }) => {
   const sidebarRef = useRef(null);
@@ -80,9 +79,6 @@ const LargeSidebar = ({ activeSection }) => {
                 <p ref={descriptionRef} className="description">
                   I learn by building interesting things.
                 </p>
-              </div>
-              <div className="point-cloud-wrapper">
-                <PointCloud />
               </div>
             </div>
           </div>

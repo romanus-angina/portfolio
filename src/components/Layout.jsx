@@ -82,7 +82,7 @@ const Layout = ({ children }) => {
         link.removeEventListener('click', handleLinkClick);
       });
     };
-  }, [activeSection]);
+  }, []);
 
   return (
     <div className="layout modern-layout">

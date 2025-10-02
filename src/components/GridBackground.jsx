@@ -272,7 +272,7 @@ const GridBackground = ({
     const finalWidth = width || canvas.width;
     const finalHeight = height || canvas.height;
     
-    console.log('Animating with dimensions:', { width: finalWidth, height: finalHeight, particles: particlesRef.current.length });
+    // console.log('Animating with dimensions:', { width: finalWidth, height: finalHeight, particles: particlesRef.current.length });
 
     // Clear canvas
     ctx.fillStyle = config.bgColor;
