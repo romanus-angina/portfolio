@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import LargeSidebar from './LargeSidebar';
 import CursorGlow from './CursorGlow';
-import MetallicBackground from './MetallicBackground';
+import GridBackground from './GridBackground';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 
@@ -86,7 +86,16 @@ const Layout = ({ children }) => {
 
   return (
     <div className="layout modern-layout">
-      <MetallicBackground />
+      <GridBackground 
+        variant="electric" // Electric blue for lab-spec theme
+        animated={true} 
+        showDots={true} 
+        showLines={false} // Disabled grid lines
+        opacity={0.4} // Much higher opacity for better visibility
+        spacing={60} // Even more spacing for fewer particles
+        dotSize={1}
+        interactive={true}
+      />
       <CursorGlow />
       
       <div className="content-container">
