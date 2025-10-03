@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import FolderIcon from './FolderIcon';
-import OpenFolder from './OpenFolder';
 import { folderData } from './FileCabinetData';
 
 const FileCabinet = () => {
   const [activeFolder, setActiveFolder] = useState(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const fileCabinetRef = useRef(null);
-  const openFolderRef = useRef(null);
+  const folderRefs = useRef([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -16,74 +15,101 @@ const FileCabinet = () => {
     }
   }, []);
 
-  const handleFolderClick = (folder) => {
+  const handleFolderClick = (folder, index) => {
     if (isAnimating) return;
     
     if (activeFolder && activeFolder.id === folder.id) {
-      closeFolder();
+      closeFolder(index);
     } else {
-      openFolder(folder);
+      openFolder(folder, index);
     }
   };
 
-  const openFolder = (folder) => {
+  const openFolder = (folder, clickedIndex) => {
     setIsAnimating(true);
-    setActiveFolder(folder);
     
-    if (openFolderRef.current) {
-      gsap.fromTo(openFolderRef.current, 
-        {
-          scale: 0.7,
-          opacity: 0,
-          y: 30,
-          rotationX: -15,
-          rotationY: 5
+    const timeline = gsap.timeline({
+      onComplete: () => {
+        setActiveFolder(folder);
+        setIsAnimating(false);
+      }
+    });
+
+    const clickedFolder = folderRefs.current[clickedIndex];
+    const otherFolders = folderRefs.current.filter((_, i) => i !== clickedIndex);
+
+    timeline
+      .to({}, { duration: 0.05 })
+      
+      .to(clickedFolder, {
+        z: 10,
+        scale: 1.05,
+        duration: 0.15,
+        ease: "power2.out"
+      }, "pulse")
+      
+      .to(clickedFolder, {
+        z: 0,
+        scale: 1,
+        duration: 0.15,
+        ease: "power2.in"
+      }, "pulse+=0.15")
+      
+      .to(otherFolders, {
+        z: (i) => {
+          const originalIndex = folderRefs.current.indexOf(otherFolders[i]);
+          return -originalIndex * 60 - 80;
         },
-        {
-          scale: 1.1,
-          opacity: 1,
-          y: -20,
-          rotationX: 0,
-          rotationY: 0,
-          duration: 0.6,
-          ease: "power2.out",
-          onComplete: () => setIsAnimating(false)
-        }
-      );
-    }
+        opacity: 0.4,
+        scale: 0.95,
+        duration: 0.4,
+        stagger: 0.02,
+        ease: "power2.inOut"
+      }, "parting")
+      
+      .to(clickedFolder, {
+        z: 150,
+        rotateX: -2,
+        scale: 1.15,
+        duration: 0.6,
+        ease: "power3.out"
+      }, "ascend");
   };
 
-  const closeFolder = () => {
+  const closeFolder = (clickedIndex) => {
     if (!activeFolder) return;
     
     setIsAnimating(true);
     
-    if (openFolderRef.current) {
-      gsap.to(openFolderRef.current, 
-        {
-          scale: 0.7,
-          opacity: 0,
-          y: 30,
-          rotationX: -15,
-          rotationY: 5,
-          duration: 0.4,
-          ease: "power2.in",
-          onComplete: () => {
-            setActiveFolder(null);
-            setIsAnimating(false);
-          }
-        }
-      );
-    } else {
-      setActiveFolder(null);
-      setIsAnimating(false);
-    }
+    const timeline = gsap.timeline({
+      onComplete: () => {
+        setActiveFolder(null);
+        setIsAnimating(false);
+      }
+    });
+
+    timeline.to(folderRefs.current, {
+      x: 0,
+      y: 0,
+      z: (i) => -i * 60,
+      rotateX: -2,
+      rotateY: 0,
+      scale: 1,
+      opacity: 1,
+      duration: 0.5,
+      stagger: 0.03,
+      ease: "power2.out"
+    });
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (activeFolder && openFolderRef.current && !openFolderRef.current.contains(event.target)) {
-        closeFolder();
+      if (activeFolder) {
+        const clickedInsideFolder = folderRefs.current.some(ref => ref && ref.contains(event.target));
+        if (!clickedInsideFolder) {
+          const activeFolderIndex = folderData.findIndex(f => f.id === activeFolder.id);
+          closeFolder(activeFolderIndex);
+        }
       }
     };
 
@@ -109,12 +135,13 @@ const FileCabinet = () => {
               <div 
                 key={folder.id} 
                 className="folder-wrapper"
+                ref={el => folderRefs.current[index] = el}
                 style={{
                   transform: `
-                    translateX(${index * 70}px)
-                    rotateY(-10deg)
+                    translateZ(${-index * 60}px)
+                    rotateX(-2deg)
                   `,
-                  zIndex: index,
+                  zIndex: activeFolder && activeFolder.id === folder.id ? 1000 : folderData.length - index,
                   '--folder-index': index
                 }}
               >
@@ -122,19 +149,14 @@ const FileCabinet = () => {
                   folder={folder}
                   tabPosition={getTabPosition(index)}
                   isActive={activeFolder && activeFolder.id === folder.id}
-                  onClick={() => handleFolderClick(folder)}
+                  isOpen={activeFolder && activeFolder.id === folder.id}
+                  onClick={() => handleFolderClick(folder, index)}
                 />
               </div>
             ))}
           </div>
         </div>
       </div>
-      
-      {activeFolder && (
-        <div className="open-folder-wrapper" ref={openFolderRef}>
-          <OpenFolder folder={activeFolder} onClose={closeFolder} />
-        </div>
-      )}
       
       <style jsx>{`
         .file-cabinet-section {
@@ -146,6 +168,7 @@ const FileCabinet = () => {
           display: flex;
           flex-direction: column;
           justify-content: center;
+          align-items: center;
         }
 
         .section-title {
@@ -158,7 +181,7 @@ const FileCabinet = () => {
         }
 
         .file-cabinet-container {
-          max-width: 1400px;
+          max-width: 1200px;
           margin: 0 auto;
           width: 100%;
           display: flex;
@@ -166,20 +189,21 @@ const FileCabinet = () => {
           align-items: center;
           min-height: 60vh;
           perspective: 1200px;
-          perspective-origin: center center;
-          overflow-x: auto;
+          perspective-origin: center 30%;
         }
 
         .drawer {
           transform-style: preserve-3d;
-          transform: rotateX(35deg) rotateY(5deg);
+          transform: rotateX(-45deg) rotateZ(0deg);
+          position: relative;
         }
 
         .stacked-folders {
           position: relative;
-          width: 1000px;
+          width: 600px;
           height: 450px;
           transform-style: preserve-3d;
+          margin: 0 auto;
         }
 
         .folder-wrapper {
@@ -189,28 +213,17 @@ const FileCabinet = () => {
           width: 600px;
           height: 450px;
           transform-style: preserve-3d;
-          transform-origin: left center;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transform-origin: center top;
+          filter: brightness(calc(1 - var(--folder-index) * 0.05));
         }
 
-        .folder-wrapper:hover {
+        .folder-wrapper:hover:not(:has(.folder-icon.open)) {
           transform: 
-            translateX(calc(var(--folder-index) * 70px))
-            translateY(-10px)
-            rotateY(-10deg)
-            scale(1.03);
-          filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
+            translateZ(calc(var(--folder-index) * -60px + 20px))
+            rotateX(-2deg)
+            scale(1.02);
+          filter: brightness(1.05) drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
           z-index: 100;
-        }
-
-        .open-folder-wrapper {
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          z-index: 1000;
-          width: 90%;
-          max-width: 800px;
         }
 
         @media (max-width: 768px) {
@@ -225,31 +238,21 @@ const FileCabinet = () => {
 
           .file-cabinet-container {
             perspective: 900px;
+            perspective-origin: center 25%;
           }
 
           .drawer {
-            transform: rotateX(30deg) rotateY(5deg);
+            transform: rotateX(-40deg) rotateZ(0deg);
           }
 
           .stacked-folders {
-            width: 800px;
+            width: 400px;
             height: 350px;
           }
 
           .folder-wrapper {
             width: 400px;
             height: 350px;
-            transform: 
-              translateX(calc(var(--folder-index) * 50px))
-              rotateY(-10deg);
-          }
-
-          .folder-wrapper:hover {
-            transform: 
-              translateX(calc(var(--folder-index) * 50px))
-              translateY(-8px)
-              rotateY(-10deg)
-              scale(1.02);
           }
         }
 
@@ -265,31 +268,21 @@ const FileCabinet = () => {
 
           .file-cabinet-container {
             perspective: 700px;
+            perspective-origin: center 20%;
           }
 
           .drawer {
-            transform: rotateX(25deg) rotateY(5deg);
+            transform: rotateX(-35deg) rotateZ(0deg);
           }
 
           .stacked-folders {
-            width: 600px;
+            width: 300px;
             height: 280px;
           }
 
           .folder-wrapper {
             width: 300px;
             height: 280px;
-            transform: 
-              translateX(calc(var(--folder-index) * 35px))
-              rotateY(-10deg);
-          }
-
-          .folder-wrapper:hover {
-            transform: 
-              translateX(calc(var(--folder-index) * 35px))
-              translateY(-6px)
-              rotateY(-10deg)
-              scale(1.01);
           }
         }
 
