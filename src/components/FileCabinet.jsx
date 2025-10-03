@@ -42,38 +42,30 @@ const FileCabinet = () => {
       .to({}, { duration: 0.05 })
       
       .to(clickedFolder, {
-        z: 10,
-        scale: 1.05,
+        scaleY: 1.1,
         duration: 0.15,
-        ease: "power2.out"
+        ease: "power2.out",
+        transformOrigin: "center bottom"
       }, "pulse")
       
       .to(clickedFolder, {
-        z: 0,
-        scale: 1,
+        scaleY: 1,
         duration: 0.15,
         ease: "power2.in"
       }, "pulse+=0.15")
       
       .to(otherFolders, {
-        z: (i) => {
-          const originalIndex = folderRefs.current.indexOf(otherFolders[i]);
-          return -originalIndex * 60 - 80;
-        },
         opacity: 0.4,
-        scale: 0.95,
-        duration: 0.4,
-        stagger: 0.02,
+        duration: 0.3,
         ease: "power2.inOut"
-      }, "parting")
+      }, "dimming")
       
       .to(clickedFolder, {
-        z: 150,
-        rotateX: -2,
-        scale: 1.15,
+        scaleY: 1.8,
         duration: 0.6,
-        ease: "power3.out"
-      }, "ascend");
+        ease: "power3.out",
+        transformOrigin: "center bottom"
+      }, "opening");
   };
 
   const closeFolder = (clickedIndex) => {
@@ -94,7 +86,8 @@ const FileCabinet = () => {
       z: (i) => -i * 60,
       rotateX: -2,
       rotateY: 0,
-      scale: 1,
+      scaleY: 1,
+      scaleX: 1,
       opacity: 1,
       duration: 0.5,
       stagger: 0.03,
@@ -188,13 +181,13 @@ const FileCabinet = () => {
           justify-content: center;
           align-items: center;
           min-height: 60vh;
-          perspective: 1200px;
-          perspective-origin: center 30%;
+          perspective: 1500px;
+          perspective-origin: center 40%;
         }
 
         .drawer {
           transform-style: preserve-3d;
-          transform: rotateX(-45deg) rotateZ(0deg);
+          transform: rotateX(-28deg) rotateZ(0deg);
           position: relative;
         }
 
@@ -242,7 +235,7 @@ const FileCabinet = () => {
           }
 
           .drawer {
-            transform: rotateX(-40deg) rotateZ(0deg);
+            transform: rotateX(-25deg) rotateZ(0deg);
           }
 
           .stacked-folders {
@@ -272,7 +265,7 @@ const FileCabinet = () => {
           }
 
           .drawer {
-            transform: rotateX(-35deg) rotateZ(0deg);
+            transform: rotateX(-22deg) rotateZ(0deg);
           }
 
           .stacked-folders {
