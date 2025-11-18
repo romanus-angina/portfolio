@@ -136,6 +136,3 @@ const FolderIcon = ({ folder, isOpen, onClick, tabPosition = 'right', style }) =
 };
 
 export default FolderIcon;
-          
-
-
