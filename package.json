@@ -14,11 +14,14 @@
     "@react-three/drei": "^9.88.17",
     "@react-three/fiber": "^8.15.11",
     "@swc/helpers": "^0.5.15",
+    "@tailwindcss/postcss": "^4.1.17",
+    "@tailwindcss/vite": "^4.0.0",
     "gsap": "^3.12.7",
-    "next": "^13.5.11",
+    "next": "^16.0.3",
     "react": "^18",
     "react-dom": "^18",
     "react-icons": "^4.12.0",
+    "tailwindcss": "^4.0.0",
     "three": "^0.157.0"
   },
   "devDependencies": {
