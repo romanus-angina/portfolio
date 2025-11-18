@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import LargeSidebar from './LargeSidebar';
 import CursorGlow from './CursorGlow';
 import GridBackground from './GridBackground';
 import { gsap } from 'gsap';
@@ -97,9 +96,8 @@ const Layout = ({ children }) => {
         interactive={true}
       />
       <CursorGlow />
-      
+
       <div className="content-container">
-        <LargeSidebar activeSection={activeSection} />
         <main className="main-content">
           {children}
           

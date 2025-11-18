@@ -18,9 +18,6 @@ export default function Home() {
       
       <Layout>
         <FileCabinet />
-        <AboutSection />
-        <ProjectsSection />
-        <LeadershipSection />
       </Layout>
 
     </>
