@@ -33,12 +33,12 @@ const FileCabinet = () => {
      <div className="folders-container" style={{ position: 'relative', height: '600px' }}>
        <div className="stacked-folders">
          {folderData.map((folder, index) => {
-           const zIndex = index + 1; // Higher index folders appear on top
            const isOpen = activeFolderId === folder.id;
            const tabPosition = getTabPosition(index);
            const containerHeight = 600; // height of the folders container in px
            const baseBottomPosition = containerHeight - (folderClosedHeight + 105); // base bottom position for closed folders
-           const topPosition = baseBottomPosition + (index * verticalOffset);
+           const topPosition = isOpen? 200 : baseBottomPosition + (index * verticalOffset);
+           const zIndex = index + 1; // Higher index folders appear on top
            const visibleTabWidth = 40; // width of the visible part of the tab when folder is closed
            const numFolders = folderData.length;
            const folderWidth = 500; // in px
@@ -56,7 +56,8 @@ const FileCabinet = () => {
                  position: 'absolute',
                  top: `${topPosition}px`,
                  zIndex: zIndex,
-                 height: isOpen ? `${folderOpenHeight}px` : `${folderClosedHeight}px`,
+                 height: `${folderOpenHeight}px`,
+                 transition: 'top 0.6s cubic-bezier(0.4, 0, 0.2, 1), z-index 0s'
                }}
              />
            );
@@ -92,7 +93,7 @@ const FileCabinet = () => {
          height: 600px;
          display: flex;
          justify-content: center;
-         overflow: visible;
+         overflow: hidden;
          top: 100%;
          border: 1px solid green; /* debug: outline folders container area */
        }
