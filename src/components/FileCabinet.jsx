@@ -37,12 +37,13 @@ const FileCabinet = () => {
            const tabPosition = getTabPosition(index);
            const containerHeight = 600; // height of the folders container in px
            const baseBottomPosition = containerHeight - (folderClosedHeight + 105); // base bottom position for closed folders
-           const topPosition = isOpen? 200 : baseBottomPosition + (index * verticalOffset);
-           const zIndex = index + 1; // Higher index folders appear on top
+           const topPosition = isOpen ? 200 : baseBottomPosition + (index * verticalOffset);
+           const zIndex = index + 1; // Consistent z-index based on position in stack
            const visibleTabWidth = 40; // width of the visible part of the tab when folder is closed
            const numFolders = folderData.length;
            const folderWidth = 500; // in px
            const containerWidth = folderWidth + (numFolders - 1) * (visibleTabWidth); // total width of the container in vw
+           const zDepth = isOpen ? 20 : -index * 8; // Open folders come forward
 
 
            return (
@@ -52,12 +53,13 @@ const FileCabinet = () => {
                isOpen={isOpen}
                onClick={() => handleFolderClick(folder.id)}
                tabPosition={tabPosition}
+               zDepth={zDepth}
                style={{
                  position: 'absolute',
                  top: `${topPosition}px`,
                  zIndex: zIndex,
                  height: `${folderOpenHeight}px`,
-                 transition: 'top 0.6s cubic-bezier(0.4, 0, 0.2, 1), z-index 0s'
+                 transition: 'top 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
                }}
              />
            );
@@ -96,14 +98,20 @@ const FileCabinet = () => {
          overflow: hidden;
          top: 100%;
          border: 1px solid green; /* debug: outline folders container area */
+
+         /* 3D viewing setup */
+         perspective: 1200px;
+         perspective-origin: 50% 40%;
+         transform-style: preserve-3d;
        }
-        
+
        .stacked-folders {
            position: relative;
            width: 55vw;
            height: 600px;
            top: 0vh;
            border: 1px solid blue; /* debug: outline stacked folders area */
+           transform-style: preserve-3d;
          }
      `}</style>
    </section>
