@@ -8,7 +8,7 @@ const FileCabinet = () => {
  const [activeFolderId, setActiveFolderId] = React.useState(null);
  const verticalOffset = 20; // pixels between stacked folders
  const folderClosedHeight = 80; // height of closed folder tab in pixels
- const folderOpenHeight = 400; // height of open folder in pixels
+ const folderOpenHeight = 500; // height of open folder in pixels
  
  const handleFolderClick = (folderId) => {
    if (activeFolderId === folderId) {
@@ -37,7 +37,7 @@ const FileCabinet = () => {
            const tabPosition = getTabPosition(index);
            const containerHeight = 600; // height of the folders container in px
            const baseBottomPosition = containerHeight - (folderClosedHeight + 105); // base bottom position for closed folders
-           const topPosition = isOpen ? 200 : baseBottomPosition + (index * verticalOffset);
+           const topPosition = isOpen ? 100 : baseBottomPosition + (index * verticalOffset);
            const zIndex = index + 1; // Consistent z-index based on position in stack
            const visibleTabWidth = 40; // width of the visible part of the tab when folder is closed
            const numFolders = folderData.length;
@@ -95,6 +95,7 @@ const FileCabinet = () => {
          height: 600px;
          display: flex;
          justify-content: center;
+         align-items: center;
          overflow: hidden;
          top: 100%;
          border: 1px solid green; /* debug: outline folders container area */

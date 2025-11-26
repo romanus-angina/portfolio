@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import CursorGlow from './CursorGlow';
 import GridBackground from './GridBackground';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
@@ -95,7 +94,6 @@ const Layout = ({ children }) => {
         dotSize={1}
         interactive={true}
       />
-      <CursorGlow />
 
       <div className="content-container">
         <main className="main-content">

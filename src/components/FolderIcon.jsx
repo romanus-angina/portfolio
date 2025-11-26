@@ -1,12 +1,116 @@
-import React from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 
 const FolderIcon = ({ folder, isOpen, onClick, tabPosition = 'right', style, zDepth = 0 }) => {
+  const [dragTopPosition, setDragTopPosition] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ mouseY: 0, topPosition: 0 });
+  const hasMoved = useRef(false);
+
+  const initialTop = style?.top ? parseInt(style.top) : 0;
+  const MIN_TOP = 100;
+  const MAX_TOP = initialTop;
+
+  const handleMouseDown = (e) => {
+    if (e.target.closest('.folder-contents')) return;
+
+    setIsDragging(true);
+    hasMoved.current = false;
+
+    const currentTop = dragTopPosition !== null ? dragTopPosition : initialTop;
+    dragStart.current = {
+      mouseY: e.clientY,
+      topPosition: currentTop,
+    };
+
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDragging) return;
+
+      const deltaY = e.clientY - dragStart.current.mouseY;
+
+      if (Math.abs(deltaY) > 5) {
+        hasMoved.current = true;
+      }
+
+      let newTop = dragStart.current.topPosition + deltaY;
+      newTop = Math.max(MIN_TOP, Math.min(MAX_TOP, newTop));
+
+      setDragTopPosition(newTop);
+    };
+
+    const handleMouseUp = () => {
+      if (!isDragging) return;
+
+      setIsDragging(false);
+
+      if (!hasMoved.current) return;
+
+      const threshold = (MIN_TOP + MAX_TOP) / 2;
+      const currentTop = dragTopPosition !== null ? dragTopPosition : initialTop;
+
+      if (currentTop < threshold) {
+        setDragTopPosition(MIN_TOP);
+        if (!isOpen && onClick) {
+          onClick();
+        }
+      } else {
+        setDragTopPosition(null);
+        if (isOpen && onClick) {
+          onClick();
+        }
+      }
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, dragTopPosition, initialTop, MIN_TOP, MAX_TOP, isOpen, onClick]);
+
+  useEffect(() => {
+    if (!isDragging) {
+      setDragTopPosition(null);
+    }
+  }, [isOpen, isDragging]);
+
+  const handleClick = (e) => {
+    if (!hasMoved.current && onClick) {
+      onClick(e);
+    }
+  };
+
+  const currentTop = dragTopPosition !== null ? dragTopPosition : initialTop;
+  const dragRange = MAX_TOP - MIN_TOP;
+  const dragProgress = dragRange > 0 ? (currentTop - MIN_TOP) / dragRange : 0;
+  const rotation = dragProgress * 12;
+
+  const isAtTop = currentTop <= MIN_TOP + 10;
+
+  const upArrowCursor = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cline x1='12' y1='20' x2='12' y2='6' stroke='%23FFFFFF' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='12' y1='6' x2='8' y2='10' stroke='%23FFFFFF' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='12' y1='6' x2='16' y2='10' stroke='%23FFFFFF' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='12' y1='20' x2='12' y2='6' stroke='%232A2A2A' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='12' y1='6' x2='8' y2='10' stroke='%232A2A2A' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='12' y1='6' x2='16' y2='10' stroke='%232A2A2A' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E\") 12 12, pointer";
+
+  const downArrowCursor = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cline x1='12' y1='4' x2='12' y2='18' stroke='%23FFFFFF' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='12' y1='18' x2='16' y2='14' stroke='%23FFFFFF' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='12' y1='18' x2='8' y2='14' stroke='%23FFFFFF' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='12' y1='4' x2='12' y2='18' stroke='%232A2A2A' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='12' y1='18' x2='16' y2='14' stroke='%232A2A2A' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='12' y1='18' x2='8' y2='14' stroke='%232A2A2A' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E\") 12 12, pointer";
+
+  const combinedStyle = {
+    ...style,
+    top: `${currentTop}px`,
+    transition: isDragging ? 'none' : 'top 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+    cursor: isAtTop ? downArrowCursor : upArrowCursor,
+  };
 
   return (
     <div
       className={`folder-icon ${isOpen ? 'open' : 'closed'} tab-${tabPosition}`}
-      onClick={onClick}
-      style={style}
+      onMouseDown={handleMouseDown}
+      onClick={handleClick}
+      style={combinedStyle}
     >
       <div className="folder-3d-container">
         <div className="folder-tab">
@@ -29,9 +133,10 @@ const FolderIcon = ({ folder, isOpen, onClick, tabPosition = 'right', style, zDe
       <style jsx>{`
         .folder-icon {
           position: absolute;
-          width: 55vw;
-          cursor: pointer;
-          /* Don't apply transforms here - use 3d-container */
+          left: -4.5%;
+          width: 60vw;
+          height: 25vh;
+          user-select: none;
         }
 
         .folder-3d-container {
@@ -40,8 +145,8 @@ const FolderIcon = ({ folder, isOpen, onClick, tabPosition = 'right', style, zDe
           height: 100%;
           transform-style: preserve-3d;
           transform-origin: center bottom;
-          transform: rotateX(${isOpen ? 0 : 12}deg) translateZ(${zDepth}px);
-          transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+          transform: rotateX(${isDragging ? rotation : (isOpen ? 0 : 12)}deg) translateZ(${zDepth}px);
+          transition: ${isDragging ? 'none' : 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)'};
           will-change: transform;
         }
 
@@ -56,8 +161,7 @@ const FolderIcon = ({ folder, isOpen, onClick, tabPosition = 'right', style, zDe
           transition: border-bottom-color 0.3s ease, filter 0.3s ease;
           z-index: 10;
           transform-style: preserve-3d;
-          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))
-                  drop-shadow(0 1px 0 rgba(0, 0, 0, 0.15));
+          filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.25));
       }
 
       .folder-tab::before {
@@ -120,46 +224,17 @@ const FolderIcon = ({ folder, isOpen, onClick, tabPosition = 'right', style, zDe
         width: 100%;
         left: 0;
         height: calc(100% - 48px);
-        background:
-          linear-gradient(135deg, #f5f0dc 0%, #ede8d0 50%, #e5e0c8 100%),
-          repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 2px,
-            rgba(0, 0, 0, 0.01) 2px,
-            rgba(0, 0, 0, 0.01) 4px
-          );
+        background: #e8e4d0;
         border-radius: 0 0 8px 8px;
         overflow: hidden;
         transform-style: preserve-3d;
 
-        /* Dynamic shadow based on state */
+        /* Simplified shadow */
         box-shadow:
-          0 ${isOpen ? '25px 50px' : '10px 20px'} rgba(0, 0, 0, ${isOpen ? 0.3 : 0.2}),
-          0 ${isOpen ? '10px 20px' : '4px 8px'} rgba(0, 0, 0, ${isOpen ? 0.15 : 0.1}),
-          inset 0 2px 0 rgba(255, 255, 255, 0.5),
-          inset 2px 0 0 rgba(255, 255, 255, 0.3),
-          inset -2px 0 0 rgba(180, 170, 140, 0.4);
-
-        /* Edge highlights */
-        border-top: 3px solid rgba(200, 190, 160, 0.6);
-        border-left: 2px solid rgba(200, 190, 160, 0.4);
-        border-right: 2px solid rgba(160, 150, 120, 0.5);
+          0 ${isOpen ? '25px 50px' : '12px 24px'} rgba(0, 0, 0, ${isOpen ? 0.3 : 0.25});
 
         transition: box-shadow 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         border-radius: 12px 12px 12px 12px;
-      }
-
-      .folder-body::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 6px;
-        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.08), transparent);
-        pointer-events: none;
-        z-index: 1;
       }
 
       .folder-icon.open .folder-body {
@@ -172,15 +247,13 @@ const FolderIcon = ({ folder, isOpen, onClick, tabPosition = 'right', style, zDe
         animation: fadeInSlideUp 0.5s ease-out 0.3s forwards;
       }
 
-      /* Hover effects for closed folders */
       .folder-icon.closed:hover .folder-3d-container {
         transform: rotateX(9deg) translateZ(${zDepth + 8}px);
       }
 
       .folder-icon.closed:hover .folder-tab {
         border-bottom-color: #3a3a3a;
-        filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.4))
-                drop-shadow(0 1px 0 rgba(0, 0, 0, 0.2));
+        filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
       }
 
       .folder-icon.closed:hover .folder-tab::before,
@@ -190,11 +263,7 @@ const FolderIcon = ({ folder, isOpen, onClick, tabPosition = 'right', style, zDe
 
       .folder-icon.closed:hover .folder-body {
         box-shadow:
-          0 15px 30px rgba(0, 0, 0, 0.25),
-          0 6px 12px rgba(0, 0, 0, 0.15),
-          inset 0 2px 0 rgba(255, 255, 255, 0.6),
-          inset 2px 0 0 rgba(255, 255, 255, 0.4),
-          inset -2px 0 0 rgba(180, 170, 140, 0.5);
+          0 16px 32px rgba(0, 0, 0, 0.3);
       }
 
       @keyframes fadeInSlideUp {
