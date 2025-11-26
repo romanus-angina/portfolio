@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import GridBackground from './GridBackground';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+import { FaGithub, FaLinkedin, FaEnvelope } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
 
 // Register ScrollTrigger with GSAP
 if (typeof window !== 'undefined') {
@@ -20,12 +22,8 @@ const Layout = ({ children }) => {
   // Footer styling constants
   const FOOTER_PADDING_REM = 2;
   const FOOTER_MARGIN_TOP_REM = 3;
-  const FOOTER_FONT_SIZE_REM = 0.9;
-  const FOOTER_LINE_HEIGHT = 1.5;
-  const FOOTER_MAX_WIDTH_PX = 600;
-  const FOOTER_TEXT_COLOR = '#8892b0';
-  const FOOTER_HIGHLIGHT_COLOR = '#ffffff';
-  const FOOTER_HIGHLIGHT_FONT_WEIGHT = 500;
+  const FOOTER_TEXT_COLOR = '#6A6A6A';
+  const FOOTER_HIGHLIGHT_COLOR = '#FFFFFF';
 
   const [activeSection, setActiveSection] = useState('about');
 
@@ -117,11 +115,45 @@ const Layout = ({ children }) => {
         <main className="main-content">
           {children}
           
-          {/* Technology footer */}
+          {/* Social footer */}
           <div className="tech-footer">
-            <div className="tech-footer-content">
-               Built with <span className="tech-highlight">Next.js</span>, <span className="tech-highlight">Three.js</span>, and <span className="tech-highlight">React</span>. 
-              Animations powered by <span className="tech-highlight">GSAP</span>.
+            <div className="social-footer-content">
+              <a
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=sra12@rice.edu"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="social-footer-link"
+                aria-label="Email"
+              >
+                <FaEnvelope size={28} />
+              </a>
+              <a
+                href="https://github.com/romanus-angina"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="social-footer-link"
+                aria-label="GitHub"
+              >
+                <FaGithub size={28} />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/romanus-angina/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="social-footer-link"
+                aria-label="LinkedIn"
+              >
+                <FaLinkedin size={28} />
+              </a>
+              <a
+                href="https://x.com/rxmxnvs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="social-footer-link"
+                aria-label="X"
+              >
+                <FaXTwitter size={28} />
+              </a>
             </div>
           </div>
         </main>
@@ -134,18 +166,25 @@ const Layout = ({ children }) => {
           margin-top: ${FOOTER_MARGIN_TOP_REM}rem;
         }
 
-        .tech-footer-content {
-          color: ${FOOTER_TEXT_COLOR};
-          font-size: ${FOOTER_FONT_SIZE_REM}rem;
-          line-height: ${FOOTER_LINE_HEIGHT};
-          text-align: center;
-          max-width: ${FOOTER_MAX_WIDTH_PX}px;
-          margin: 0 auto;
+        .social-footer-content {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 1.5rem;
         }
 
-        .tech-highlight {
+        .social-footer-link {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          color: ${FOOTER_TEXT_COLOR};
+          transition: all 0.3s ease;
+          text-decoration: none;
+        }
+
+        .social-footer-link:hover {
           color: ${FOOTER_HIGHLIGHT_COLOR};
-          font-weight: ${FOOTER_HIGHLIGHT_FONT_WEIGHT};
+          transform: translateY(-3px);
         }
       `}</style>
     </div>

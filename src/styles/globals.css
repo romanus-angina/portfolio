@@ -165,6 +165,12 @@ input[type="button"],
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cline x1='12' y1='4' x2='12' y2='20' stroke='%23FFFFFF' stroke-width='4.5' stroke-linecap='round'/%3E%3Cline x1='4' y1='12' x2='20' y2='12' stroke='%23FFFFFF' stroke-width='4.5' stroke-linecap='round'/%3E%3Cline x1='12' y1='4' x2='12' y2='20' stroke='%2328D7FF' stroke-width='2.5' stroke-linecap='round'/%3E%3Cline x1='4' y1='12' x2='20' y2='12' stroke='%2328D7FF' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E") 12 12, pointer;
 }
 
+/* Diagonal arrow cursor for outbound links */
+a[target="_blank"],
+a[rel*="external"] {
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M7 17l9.2-9.2M17 17V7H7' stroke='%23FFFFFF' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M7 17l9.2-9.2M17 17V7H7' stroke='%232A2A2A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, pointer;
+}
+
 /* Lab-spec grid background */
 body::before {
   content: '';
@@ -375,6 +381,12 @@ h1, h2, h3, h4, h5, h6 {
   [role="button"],
   [onclick] {
     cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cline x1='12' y1='4' x2='12' y2='20' stroke='%232A2A2A' stroke-width='4.5' stroke-linecap='round'/%3E%3Cline x1='4' y1='12' x2='20' y2='12' stroke='%232A2A2A' stroke-width='4.5' stroke-linecap='round'/%3E%3Cline x1='12' y1='4' x2='12' y2='20' stroke='%2328D7FF' stroke-width='2.5' stroke-linecap='round'/%3E%3Cline x1='4' y1='12' x2='20' y2='12' stroke='%2328D7FF' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E") 12 12, pointer;
+  }
+
+  /* Diagonal arrow cursor for outbound links in dark mode */
+  a[target="_blank"],
+  a[rel*="external"] {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M7 17l9.2-9.2M17 17V7H7' stroke='%23FFFFFF' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M7 17l9.2-9.2M17 17V7H7' stroke='%232A2A2A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 12 12, pointer;
   }
 }
 

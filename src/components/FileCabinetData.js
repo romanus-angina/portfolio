@@ -33,21 +33,6 @@ export const folderData = [
     }
   },
   {
-    id: "research",
-    title: "Research",
-    number: "005",
-    color: "electric", 
-    description: "Academic research and publications",
-    asciiConfig: {
-      imagePath: "/images/rice-datathon.png",
-      artStyle: "tech",
-      colorScheme: "white",
-      width: 120,
-      height: 80,
-      disableAnimations: false
-    }
-  },
-  {
     id: "leadership",
     title: "Leadership",
     number: "002",
@@ -77,21 +62,6 @@ export const folderData = [
       disableAnimations: false
     }
   },
-  {
-    id: "contact",
-    title: "Contact",
-    number: "002",
-    color: "bio",
-    description: "Get in touch and connect",
-    asciiConfig: {
-      imagePath: "/images/threejs-logo.svg",
-      artStyle: "classic",
-      colorScheme: "green",
-      width: 120,
-      height: 80,
-      disableAnimations: false
-    }
-  }
 ];
 
 // Color mapping for folder styling
