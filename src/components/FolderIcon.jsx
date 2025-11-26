@@ -1,13 +1,21 @@
 import React, {useState, useRef, useEffect} from 'react';
 
 const FolderIcon = ({ folder, isOpen, onClick, tabPosition = 'right', style, zDepth = 0 }) => {
+  const OPEN_POSITION_VH = 10.5;
+  const DRAG_THRESHOLD_VH = 0.5;
+  const SNAP_TOLERANCE_VH = 1;
+  const MAX_ROTATION_DEG = 12;
+  const FOLDER_WIDTH_VW = 60;
+  const FOLDER_HEIGHT_VH = 25;
+  const FOLDER_LEFT_OFFSET_PERCENT = -4.5;
+
   const [dragTopPosition, setDragTopPosition] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragStart = useRef({ mouseY: 0, topPosition: 0 });
   const hasMoved = useRef(false);
 
-  const initialTop = style?.top ? parseInt(style.top) : 0;
-  const MIN_TOP = 100;
+  const initialTop = style?.top ? parseFloat(style.top) : 0;
+  const MIN_TOP = OPEN_POSITION_VH;
   const MAX_TOP = initialTop;
 
   const handleMouseDown = (e) => {
@@ -29,9 +37,9 @@ const FolderIcon = ({ folder, isOpen, onClick, tabPosition = 'right', style, zDe
     const handleMouseMove = (e) => {
       if (!isDragging) return;
 
-      const deltaY = e.clientY - dragStart.current.mouseY;
+      const deltaY = (e.clientY - dragStart.current.mouseY) / window.innerHeight * 100;
 
-      if (Math.abs(deltaY) > 5) {
+      if (Math.abs(deltaY) > DRAG_THRESHOLD_VH) {
         hasMoved.current = true;
       }
 
@@ -90,9 +98,9 @@ const FolderIcon = ({ folder, isOpen, onClick, tabPosition = 'right', style, zDe
   const currentTop = dragTopPosition !== null ? dragTopPosition : initialTop;
   const dragRange = MAX_TOP - MIN_TOP;
   const dragProgress = dragRange > 0 ? (currentTop - MIN_TOP) / dragRange : 0;
-  const rotation = dragProgress * 12;
+  const rotation = dragProgress * MAX_ROTATION_DEG;
 
-  const isAtTop = currentTop <= MIN_TOP + 10;
+  const isAtTop = currentTop <= MIN_TOP + SNAP_TOLERANCE_VH;
 
   const upArrowCursor = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cline x1='12' y1='20' x2='12' y2='6' stroke='%23FFFFFF' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='12' y1='6' x2='8' y2='10' stroke='%23FFFFFF' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='12' y1='6' x2='16' y2='10' stroke='%23FFFFFF' stroke-width='4' stroke-linecap='round'/%3E%3Cline x1='12' y1='20' x2='12' y2='6' stroke='%232A2A2A' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='12' y1='6' x2='8' y2='10' stroke='%232A2A2A' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='12' y1='6' x2='16' y2='10' stroke='%232A2A2A' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E\") 12 12, pointer";
 
@@ -100,7 +108,7 @@ const FolderIcon = ({ folder, isOpen, onClick, tabPosition = 'right', style, zDe
 
   const combinedStyle = {
     ...style,
-    top: `${currentTop}px`,
+    top: `${currentTop}vh`,
     transition: isDragging ? 'none' : 'top 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
     cursor: isAtTop ? downArrowCursor : upArrowCursor,
   };
@@ -133,9 +141,9 @@ const FolderIcon = ({ folder, isOpen, onClick, tabPosition = 'right', style, zDe
       <style jsx>{`
         .folder-icon {
           position: absolute;
-          left: -4.5%;
-          width: 60vw;
-          height: 25vh;
+          left: ${FOLDER_LEFT_OFFSET_PERCENT}%;
+          width: ${FOLDER_WIDTH_VW}vw;
+          height: ${FOLDER_HEIGHT_VH}vh;
           user-select: none;
         }
 

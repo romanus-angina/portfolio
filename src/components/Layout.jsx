@@ -9,15 +9,33 @@ if (typeof window !== 'undefined') {
 }
 
 const Layout = ({ children }) => {
+  // Grid background constants
+  const GRID_SPACING_PX = 60;
+  const GRID_DOT_SIZE_PX = 1;
+  const GRID_OPACITY = 0.4;
+
+  // Scroll tracking constants
+  const SCROLL_OFFSET_DIVISOR = 3;
+
+  // Footer styling constants
+  const FOOTER_PADDING_REM = 2;
+  const FOOTER_MARGIN_TOP_REM = 3;
+  const FOOTER_FONT_SIZE_REM = 0.9;
+  const FOOTER_LINE_HEIGHT = 1.5;
+  const FOOTER_MAX_WIDTH_PX = 600;
+  const FOOTER_TEXT_COLOR = '#8892b0';
+  const FOOTER_HIGHLIGHT_COLOR = '#ffffff';
+  const FOOTER_HIGHLIGHT_FONT_WEIGHT = 500;
+
   const [activeSection, setActiveSection] = useState('about');
 
   useEffect(() => {
     // Track active section on scroll
     const sections = document.querySelectorAll('section[id]');
-    
+
     const handleScroll = () => {
       // Get current scroll position, with a slight offset to trigger earlier
-      const scrollPosition = window.scrollY + window.innerHeight / 3;
+      const scrollPosition = window.scrollY + window.innerHeight / SCROLL_OFFSET_DIVISOR;
       
       // Find the section that's currently in view
       let currentSection = '';
@@ -84,14 +102,14 @@ const Layout = ({ children }) => {
 
   return (
     <div className="layout modern-layout">
-      <GridBackground 
-        variant="electric" // Electric blue for lab-spec theme
-        animated={true} 
-        showDots={true} 
-        showLines={false} // Disabled grid lines
-        opacity={0.4} // Much higher opacity for better visibility
-        spacing={60} // Even more spacing for fewer particles
-        dotSize={1}
+      <GridBackground
+        variant="electric"
+        animated={true}
+        showDots={true}
+        showLines={false}
+        opacity={GRID_OPACITY}
+        spacing={GRID_SPACING_PX}
+        dotSize={GRID_DOT_SIZE_PX}
         interactive={true}
       />
 
@@ -112,22 +130,22 @@ const Layout = ({ children }) => {
       <style jsx>{`
         .tech-footer {
           width: 100%;
-          padding: 2rem 0;
-          margin-top: 3rem;
+          padding: ${FOOTER_PADDING_REM}rem 0;
+          margin-top: ${FOOTER_MARGIN_TOP_REM}rem;
         }
-        
+
         .tech-footer-content {
-          color: #8892b0;
-          font-size: 0.9rem;
-          line-height: 1.5;
+          color: ${FOOTER_TEXT_COLOR};
+          font-size: ${FOOTER_FONT_SIZE_REM}rem;
+          line-height: ${FOOTER_LINE_HEIGHT};
           text-align: center;
-          max-width: 600px;
+          max-width: ${FOOTER_MAX_WIDTH_PX}px;
           margin: 0 auto;
         }
-        
+
         .tech-highlight {
-          color: #ffffff;
-          font-weight: 500;
+          color: ${FOOTER_HIGHLIGHT_COLOR};
+          font-weight: ${FOOTER_HIGHLIGHT_FONT_WEIGHT};
         }
       `}</style>
     </div>
