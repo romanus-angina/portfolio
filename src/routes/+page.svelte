@@ -25,11 +25,4 @@
     padding: 1rem;
     border: 1px dashed #ccc;
   }
-  
-  h2 {
-    margin-bottom: 1rem;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-  }
 </style>

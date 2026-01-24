@@ -59,3 +59,21 @@ a:hover {
     color: var(--color-link-underline);
 }
 
+.container {
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: 0 var(--space-lg);
+}
+
+h1, h2, h3 {
+    line-height: var(--line-height);
+    font-weight: 600;
+}
+
+h1 { font-size: 2 rem; }
+h2 { font-size: 1.5 rem;}
+h3 { font-size: 1.25 rem;}
+
+p {
+    margin-bottom: var(--space-md);
+}
