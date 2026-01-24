@@ -1,15 +1,35 @@
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
-<style>
-    a {
-    color: #1a1a1a;
-    text-decoration: solid underline #84161f 3px;
-    text-underline-offset: 2px;
-}
+<script lang="ts">
+    import ThemeToggle from '$lib/components/ThemeToggle.svelte'
+</script>
 
-a:hover {
-    opacity: 0.8;
-    transition: ease all 0.2s;
-    color: #84161f;
-}
+<h1> Component Testing </h1>
+
+<section> 
+    <h2>Theme Toggle</h2>
+    <ThemeToggle />
+</section>
+
+<section>
+    <h2>Theme Toggle</h2>
+    <p>
+        Here is a <a href="#">sample link</a> to see the underline.
+    </p>
+    <p>
+        Another <a href="https://example.com">external link</a> for testing.
+    </p>
+</section>
+
+<style>
+  section {
+    margin-bottom: 3rem;
+    padding: 1rem;
+    border: 1px dashed #ccc;
+  }
+  
+  h2 {
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
 </style>
