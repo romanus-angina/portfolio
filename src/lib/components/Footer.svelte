@@ -3,10 +3,12 @@
 </script>
 
 <footer class="footer">
-    <div class="footer-content">
-        <span class="copyright">© {currentYear}</span>
-        <span class="signature"> Romanus Ang'ina</span>
-    </div> 
+    <div class="footer-container">
+        <div class="footer-content">
+            <span class="copyright">© {currentYear}</span>
+            <span class="signature"> Romanus Ang'ina</span>
+        </div> 
+    </div>
 </footer>
 
 <style>
@@ -14,6 +16,11 @@
         padding: var(--space-md);
     }
 
+    .footer-container {
+        max-width: 42rem;
+        margin: 0 auto;
+        padding: 0 var(--space-md);
+    }
     .footer-content {
         border-top: 1px solid var(--color-text-muted);
         max-width: 42rem;
