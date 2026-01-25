@@ -15,9 +15,6 @@
             <li>
                 <a href="/writing">Writing</a>
             </li>
-            <li>
-                <a href="/resume.pdf" target="_blank" rel="noopener noreferrer">Resume</a>
-            </li>
         </ul>
 
         <ThemeToggle />
