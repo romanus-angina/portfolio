@@ -11,14 +11,14 @@
 
 <style>
     .footer {
-        padding: var(--space-lg) 0;
+        padding: var(--space-md);
     }
 
     .footer-content {
         border-top: 1px solid var(--color-text-muted);
         max-width: 42rem;
         margin: 0 auto;
-        padding: 0 var(--space-lg);
+        padding: 0 var(--space-md);
         display: flex;
         justify-content: space-between;
     }

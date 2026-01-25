@@ -26,7 +26,7 @@
 
 <style>
 .header{
-    padding: var(--space-md) 0;
+    padding: 0 var(--space-md);
 }
 
 .nav {
@@ -35,6 +35,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 0 var(--space-md);
 }
 
 

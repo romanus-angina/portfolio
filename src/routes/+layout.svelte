@@ -28,6 +28,7 @@
   .main {
     max-width: 42rem;
     margin: 0 auto;
+    padding: 0 var(--space-md);
     min-height: calc(100vh - 200px);
   }
 </style>
