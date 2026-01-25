@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 
+  import Footer from '$lib/components/Footer.svelte'
 	import Header from '$lib/components/Header.svelte'
     import { onMount } from 'svelte';
     import { theme } from '$lib/stores/themes';
@@ -21,9 +22,12 @@
   {@render children()}
 </main>
 
+<Footer />
+
 <style>
   .main {
     max-width: 42rem;
     margin: 0 auto;
+    min-height: calc(100vh - 200px);
   }
 </style>
