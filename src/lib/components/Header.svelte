@@ -21,7 +21,7 @@
         </ul>
 
         <ThemeToggle />
-    <nav>
+    </nav>
 </header>
 
 <style>
