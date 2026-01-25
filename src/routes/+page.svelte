@@ -42,9 +42,8 @@
 </section>
 
 <section class="contact">
-  
   <ul class="contact-links">
-    <li><a href="https://mail.google.com/mail/?view=cm&fs=1&to=sra12@rice.edu" target="_blank">Email</a></li>
+    <li><a href="https://twitter.com/rxmxnvs" target="_blank">Twitter</a></li>
     <li><a href="https://github.com/romanus-angina" target="_blank">GitHub</a></li>
     <li><a href="https://www.linkedin.com/in/romanus-angina/" target="_blank">LinkedIn</a></li>
   </ul>
@@ -70,4 +69,7 @@
     justify-content: space-evenly;
   }
 
+  .contact{
+    padding: 0 var(--space-md);
+  }
 </style>
