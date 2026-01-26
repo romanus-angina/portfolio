@@ -43,9 +43,9 @@
 
 <section class="contact">
   <ul class="contact-links">
-    <li><LinkWithHover href="https://twitter.com/rxmxnvs" hoverSrc="/images/hover/barraband_petit_dithered.png" hoverPosition="below" offsetDistance="1rem" external={true}>Twitter</LinkWithHover></li>
-    <li><LinkWithHover href="https://github.com/romanus-angina" hoverSrc="/images/hover/bevzenko_young_workers_dithered.png" hoverPosition="below" offsetDistance="1rem" external={true}>GitHub</LinkWithHover></li>
-    <li><LinkWithHover href="https://www.linkedin.com/in/romanus-angina/" hoverSrc="/images/hover/anschutz_iron_workers_noontime_dithered.png" hoverPosition="below" offsetDistance="1rem" external={true}>LinkedIn</LinkWithHover></li>
+    <li><LinkWithHover href="https://twitter.com/rxmxnvs" hoverSrc="/images/hover/barraband_petit_dithered.png" hoverPosition="below" offsetDistance="1rem" alwaysShowOnMobile={true} external={true}>Twitter</LinkWithHover></li>
+    <li><LinkWithHover href="https://github.com/romanus-angina" hoverSrc="/images/hover/bevzenko_young_workers_dithered.png" hoverPosition="below" offsetDistance="1rem" alwaysShowOnMobile={true} external={true}>GitHub</LinkWithHover></li>
+    <li><LinkWithHover href="https://www.linkedin.com/in/romanus-angina/" hoverSrc="/images/hover/anschutz_iron_workers_noontime_dithered.png" hoverPosition="below" offsetDistance="1rem" alwaysShowOnMobile={true} external={true}>LinkedIn</LinkWithHover></li>
   </ul>
 </section>
 
@@ -71,6 +71,11 @@
 
   .contact{
     padding: 0 var(--space-md);
-    padding-bottom: 8rem;
+  }
+
+  @media(hover: hover) {
+    .contact {
+      padding-bottom: 8rem;
+    }
   }
 </style>

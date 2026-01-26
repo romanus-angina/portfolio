@@ -1,5 +1,7 @@
 <script lang="ts">
     import HoverImage from "./HoverImage.svelte";
+    import { onMount } from 'svelte';
+    
     interface Props {
         href: string;
         hoverSrc: string;
@@ -7,6 +9,9 @@
         external?: boolean;
         hoverPosition?: 'left' | 'right' | 'below';
         offsetDistance?: string;
+        alwaysShowOnMobile?: boolean;
+        mobileWidth?: string;
+        mobileHeight?: string;
         children: any;
     }
 
@@ -17,6 +22,9 @@
         external = false,
         hoverPosition = 'right',
         offsetDistance = '-2rem',
+        alwaysShowOnMobile = false,
+        mobileWidth = '64',
+        mobileHeight = '64',
         children 
     }: Props = $props();
 
@@ -61,6 +69,12 @@
     function handleMouseLeave() {
         isHovered = false;
     }
+
+    onMount(() => {
+        if (alwaysShowOnMobile) {
+            updatePosition();
+        }
+    });
 </script>
 
 <span class="link-wrapper" role="presentation" bind:this={linkElement} onmouseenter={handleMouseEnter} onmouseleave={handleMouseLeave}>
@@ -77,11 +91,17 @@
         class="hover-preview" 
         class:visible={isHovered}
         class:below={hoverPosition === 'below'}
+        class:always-show-mobile={alwaysShowOnMobile}
         style:top={hoverPosition === 'below' ? `calc(${hoverY}px + ${offsetDistance})` : `${hoverY}px`}
         style:left={hoverPosition === 'below' ? `${hoverX}px` : hoverPosition === 'right' ? `calc(${hoverX}px + ${offsetDistance})` : 'auto'}
         style:right={hoverPosition === 'left' ? `calc(100vw - ${hoverX}px + ${offsetDistance})` : 'auto'}
     >
-        <HoverImage src={hoverSrc} alt={hoverAlt}/>
+        <div class="desktop-image">
+            <HoverImage src={hoverSrc} alt={hoverAlt}/>
+        </div>
+        <div class="mobile-image">
+            <HoverImage src={hoverSrc} alt={hoverAlt} width={mobileWidth} height={mobileHeight}/>
+        </div>
     </div>
 </span>
 
@@ -109,9 +129,29 @@
         opacity: 1;
     }
 
+    .mobile-image {
+        display: none;
+    }
+
     @media(hover: none) {
         .hover-preview {
             display: none;
+        }
+
+        .hover-preview.always-show-mobile {
+            display: block;
+            opacity: 1;
+            position: static;
+            transform: none;
+            pointer-events: auto;
+        }
+
+        .hover-preview.always-show-mobile .desktop-image {
+            display: none;
+        }
+
+        .hover-preview.always-show-mobile .mobile-image {
+            display: block;
         }
     }
 
