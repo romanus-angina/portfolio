@@ -21,7 +21,7 @@
         hoverAlt = '', 
         external = false,
         hoverPosition = 'right',
-        offsetDistance = '-2rem',
+        offsetDistance = '0rem',
         alwaysShowOnMobile = false,
         mobileWidth = '64',
         mobileHeight = '64',

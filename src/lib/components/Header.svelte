@@ -1,5 +1,6 @@
 <script lang="ts">
     import ThemeToggle from '$lib/components/ThemeToggle.svelte';
+    import LinkWithHover from '$lib/components/LinkWithHover.svelte';
     import { page } from '$app/stores';
 
     $: isHome = $page.url.pathname === '/';
@@ -10,10 +11,22 @@
     <nav class="nav">
         <ul class="nav-links">
             <li>
-                <a href={aboutHref}>About</a>
+                <LinkWithHover 
+                    href={aboutHref} 
+                    hoverSrc="/images/hover/klever_christ_walkin_on_the_waters_dithered.png"
+                    hoverPosition="left"
+                >
+                    About
+                </LinkWithHover>
             </li>
             <li>
-                <a href="/writing">Writing</a>
+                <LinkWithHover 
+                    href="/writing" 
+                    hoverSrc="/images/hover/caravaggio_saint_jerome_writing_dithered.png"
+                    hoverPosition="left"
+                >
+                    Writing
+                </LinkWithHover>
             </li>
         </ul>
 
@@ -23,7 +36,7 @@
 
 <style>
 .header{
-    padding: 0 var(--space-md);
+    padding: var(--space-md);
 }
 
 .nav {
