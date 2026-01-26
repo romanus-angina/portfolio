@@ -55,7 +55,7 @@
     <div class="intro-text">
 
       <p>
-        Currently,I'm a junior studying Electrical & Computer Engineering at Rice University, 
+        Currently, I'm a junior studying Electrical & Computer Engineering at Rice University, 
         where I research ML applications in wireless systems with <LinkWithHover href="https://doost.rice.edu/" hoverSrc="/images/hover/vermeer_astronomer_dithered.webp" external={true}>Dr. Rahman Doost-Mohammady</LinkWithHover> 
         under <LinkWithHover href="https://renew.rice.edu/" hoverSrc="/images/hover/luycks_still_life_with_globe_dithered.webp" hoverPosition="left" external={true}>Rice's RENEW project</LinkWithHover>. I've also worked on glucose prediction models for diabetes patients with 
         <LinkWithHover href="https://simar.rice.edu/" hoverSrc="/images/hover/vermeer_the_geographer_dithered.webp" hoverPosition="left" external={true}>Dr. Ray Simar</LinkWithHover> and worked on FinFET efficiency improvements at <LinkWithHover href="https://wide.rice.edu/" hoverSrc="/images/hover/wright_of_derby_the_alchemist_dithered.webp" hoverPosition="right" external={true}>Rice's WIDE Lab</LinkWithHover>.
