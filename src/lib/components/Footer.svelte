@@ -38,8 +38,8 @@
         width: 100%;
         aspect-ratio: 1344 / 400;
         background-color: var(--color-image);
-        -webkit-mask-image: url('/images/footer/cisori_ecco_homo_dithered.png');
-        mask-image: url('/images/footer/cisori_ecco_homo_dithered.png');
+        -webkit-mask-image: url('/images/footer/cisori_ecco_homo_dithered.webp');
+        mask-image: url('/images/footer/cisori_ecco_homo_dithered.webp');
         -webkit-mask-size: cover;
         mask-size: cover;
         -webkit-mask-repeat: no-repeat;

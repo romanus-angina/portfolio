@@ -13,7 +13,7 @@
             <li>
                 <LinkWithHover 
                     href={aboutHref} 
-                    hoverSrc="/images/hover/klever_christ_walkin_on_the_waters_dithered.png"
+                    hoverSrc="/images/hover/klever_christ_walkin_on_the_waters_dithered.webp"
                     hoverPosition="left"
                 >
                     About
@@ -22,7 +22,7 @@
             <li>
                 <LinkWithHover 
                     href="/writing" 
-                    hoverSrc="/images/hover/caravaggio_saint_jerome_writing_dithered.png"
+                    hoverSrc="/images/hover/caravaggio_saint_jerome_writing_dithered.webp"
                     hoverPosition="left"
                 >
                     Writing
