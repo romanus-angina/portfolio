@@ -4,6 +4,7 @@
     --color-text: #1a1a1a;
     --color-text-muted: #555555;
     --color-link-underline: #84161f;
+    --color-link-hover-bg: #fff5f5;
     --color-image: #991925;
 
     /* Spacing */
@@ -26,6 +27,7 @@
     --color-text: #f0f0f0;
     --color-text-muted: #999999;
     --color-link-underline: #22B464;
+    --color-link-hover-bg: #1a2d24;
     --color-image: #6ae4a3;
 }
 
@@ -52,12 +54,21 @@ a {
     color:var(--color-text);
     text-decoration: solid underline var(--color-link-underline) 3px;
     text-underline-offset: 4px;
+    transition: all var(--transition-speed) ease;
 }
 
 a:hover {
     opacity: 0.8;
-    transition: ease all var(--transition-speed);
     color: var(--color-link-underline);
+    background-color: var(--color-link-hover-bg);
+    padding: 1px 2px;
+    margin: -1px -2px;
+    border-radius: 2px;
+}
+
+a:visited {
+    color: var(--color-link-underline);
+    opacity: 0.8;
 }
 
 .container {
