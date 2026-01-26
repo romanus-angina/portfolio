@@ -51,7 +51,7 @@ body {
 a {
     color:var(--color-text);
     text-decoration: solid underline var(--color-link-underline) 3px;
-    text-underline-offset: 2px;
+    text-underline-offset: 4px;
 }
 
 a:hover {
