@@ -100,7 +100,15 @@
             <HoverImage src={hoverSrc} alt={hoverAlt}/>
         </span>
         <span class="mobile-image">
-            <HoverImage src={hoverSrc} alt={hoverAlt} width={mobileWidth} height={mobileHeight}/>
+            {#if external}
+                <a href={href} target="_blank" rel="noopener noreferrer">
+                    <HoverImage src={hoverSrc} alt={hoverAlt} width={mobileWidth} height={mobileHeight}/>
+                </a>
+            {:else}
+                <a href={href}>
+                    <HoverImage src={hoverSrc} alt={hoverAlt} width={mobileWidth} height={mobileHeight}/>
+                </a>
+            {/if}
         </span>
     </span>
 </span>
@@ -157,6 +165,11 @@
 
         .hover-preview.always-show-mobile .mobile-image {
             display: block;
+        }
+
+        .hover-preview.always-show-mobile .mobile-image a {
+            display: inline-block;
+            line-height: 0;
         }
     }
 
