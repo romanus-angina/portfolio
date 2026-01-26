@@ -36,7 +36,7 @@
 
 <style>
 .header{
-    padding: var(--space-md);
+    padding: var(--space-md) 0;
 }
 
 .nav {
