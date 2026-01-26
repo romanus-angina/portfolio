@@ -14,11 +14,11 @@ let {
 }: Props = $props();
 </script>
 
-<span class="hover-image" style:width="{width}px" style:height="{height}px" style:--mask-image="url('{src}')" role="img" aria-label="{alt}">
+<span class="dithered-image" style:width="{width}px" style:height="{height}px" style:--mask-image="url('{src}')" role="img" aria-label="{alt}">
 </span>
 
 <style>
-    .hover-image{
+    .dithered-image{
         display: inline-block;
         background-color: var(--color-image);
         -webkit-mask-image: var(--mask-image);

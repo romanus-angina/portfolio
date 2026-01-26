@@ -1,5 +1,13 @@
 <script lang="ts">
-  import LinkWithHover from "$lib/components/LinkWithHover.svelte";
+  import HoverLink from "$lib/components/HoverLink.svelte";
+  import LinkWithImage from "$lib/components/LinkWithImage.svelte";
+  import { onMount } from 'svelte';
+
+  let supportsHover = $state(true);
+
+  onMount(() => {
+    supportsHover = window.matchMedia('(hover: hover)').matches;
+  });
 </script>
 
 <svelte:head>
@@ -56,14 +64,14 @@
 
       <p>
         Currently, I'm a junior studying Electrical & Computer Engineering at Rice University, 
-        where I research ML applications in wireless systems with <LinkWithHover href="https://doost.rice.edu/" hoverSrc="/images/hover/vermeer_astronomer_dithered.webp" external={true}>Dr. Rahman Doost-Mohammady</LinkWithHover> 
-        under <LinkWithHover href="https://renew.rice.edu/" hoverSrc="/images/hover/luycks_still_life_with_globe_dithered.webp" hoverPosition="left" external={true}>Rice's RENEW project</LinkWithHover>. I've also worked on glucose prediction models for diabetes patients with 
-        <LinkWithHover href="https://simar.rice.edu/" hoverSrc="/images/hover/vermeer_the_geographer_dithered.webp" hoverPosition="left" external={true}>Dr. Ray Simar</LinkWithHover> and worked on FinFET efficiency improvements at <LinkWithHover href="https://wide.rice.edu/" hoverSrc="/images/hover/wright_of_derby_the_alchemist_dithered.webp" hoverPosition="right" external={true}>Rice's WIDE Lab</LinkWithHover>.
+        where I research ML applications in wireless systems with <HoverLink href="https://doost.rice.edu/" hoverSrc="/images/hover/vermeer_astronomer_dithered.webp" external={true}>Dr. Rahman Doost-Mohammady</HoverLink> 
+        under <HoverLink href="https://renew.rice.edu/" hoverSrc="/images/hover/luycks_still_life_with_globe_dithered.webp" hoverPosition="left" external={true}>Rice's RENEW project</HoverLink>. I've also worked on glucose prediction models for diabetes patients with 
+        <HoverLink href="https://simar.rice.edu/" hoverSrc="/images/hover/vermeer_the_geographer_dithered.webp" hoverPosition="left" external={true}>Dr. Ray Simar</HoverLink> and worked on FinFET efficiency improvements at <HoverLink href="https://wide.rice.edu/" hoverSrc="/images/hover/wright_of_derby_the_alchemist_dithered.webp" hoverPosition="right" external={true}>Rice's WIDE Lab</HoverLink>.
       </p>
 
       <p>
         Previously, I built full-stack AI systems at a stealth health-tech startup (production RAG pipelines, ML infrastructure) and 
-        AI implementations for businesses in Houston at <LinkWithHover href="https://www.linkedin.com/company/agentic-ai-services" hoverSrc="/images/hover/clausen_our_blacksmith_dithered.webp" external={true}>Agentic AI Services</LinkWithHover>.
+        AI implementations for businesses in Houston at <HoverLink href="https://www.linkedin.com/company/agentic-ai-services" hoverSrc="/images/hover/clausen_our_blacksmith_dithered.webp" external={true}>Agentic AI Services</HoverLink>.
       </p>
 
       <p>
@@ -71,7 +79,7 @@
       </p>
 
       <p>
-        If you're building something interesting or just want to chat, <LinkWithHover href="https://mail.google.com/mail/?view=cm&fs=1&to=sra12@rice.edu" hoverSrc="/images/hover/schneider_hypnosis_dithered.webp" hoverPosition="right" external={true}>reach out.</LinkWithHover>
+        If you're building something interesting or just want to chat, <HoverLink href="https://mail.google.com/mail/?view=cm&fs=1&to=sra12@rice.edu" hoverSrc="/images/hover/schneider_hypnosis_dithered.webp" hoverPosition="right" external={true}>reach out.</HoverLink>
       </p>
     </div>
   </div>
@@ -79,9 +87,15 @@
 
 <section class="contact">
   <ul class="contact-links">
-    <li><LinkWithHover href="https://twitter.com/rxmxnvs" hoverSrc="/images/hover/barraband_petit_dithered.webp" hoverPosition="below" offsetDistance="1rem" alwaysShowOnMobile={true} external={true}>Twitter</LinkWithHover></li>
-    <li><LinkWithHover href="https://github.com/romanus-angina" hoverSrc="/images/hover/bevzenko_young_workers_dithered.webp" hoverPosition="below" offsetDistance="1rem" alwaysShowOnMobile={true} external={true}>GitHub</LinkWithHover></li>
-    <li><LinkWithHover href="https://www.linkedin.com/in/romanus-angina/" hoverSrc="/images/hover/anschutz_iron_workers_noontime_dithered.webp" hoverPosition="below" offsetDistance="1rem" alwaysShowOnMobile={true} external={true}>LinkedIn</LinkWithHover></li>
+    {#if supportsHover}
+      <li><HoverLink href="https://twitter.com/rxmxnvs" hoverSrc="/images/hover/barraband_petit_dithered.webp" hoverPosition="below" offsetDistance="1rem" external={true}>Twitter</HoverLink></li>
+      <li><HoverLink href="https://github.com/romanus-angina" hoverSrc="/images/hover/bevzenko_young_workers_dithered.webp" hoverPosition="below" offsetDistance="1rem" external={true}>GitHub</HoverLink></li>
+      <li><HoverLink href="https://www.linkedin.com/in/romanus-angina/" hoverSrc="/images/hover/anschutz_iron_workers_noontime_dithered.webp" hoverPosition="below" offsetDistance="1rem" external={true}>LinkedIn</HoverLink></li>
+    {:else}
+      <li><LinkWithImage href="https://twitter.com/rxmxnvs" imageSrc="/images/hover/barraband_petit_dithered.webp" imageAlt="Twitter" offsetDistance="0.25rem" external={true}>Twitter</LinkWithImage></li>
+      <li><LinkWithImage href="https://github.com/romanus-angina" imageSrc="/images/hover/bevzenko_young_workers_dithered.webp" imageAlt="GitHub" offsetDistance="0.25rem" external={true}>GitHub</LinkWithImage></li>
+      <li><LinkWithImage href="https://www.linkedin.com/in/romanus-angina/" imageSrc="/images/hover/anschutz_iron_workers_noontime_dithered.webp" imageAlt="LinkedIn" offsetDistance="0.25rem" external={true}>LinkedIn</LinkWithImage></li>
+    {/if}
   </ul>
 </section>
 
