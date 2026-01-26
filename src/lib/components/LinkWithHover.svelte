@@ -87,7 +87,7 @@
             {@render children()}
         </a>
     {/if}
-    <div 
+    <span 
         class="hover-preview" 
         class:visible={isHovered}
         class:below={hoverPosition === 'below'}
@@ -96,13 +96,13 @@
         style:left={hoverPosition === 'below' ? `${hoverX}px` : hoverPosition === 'right' ? `calc(${hoverX}px + ${offsetDistance})` : 'auto'}
         style:right={hoverPosition === 'left' ? `calc(100vw - ${hoverX}px + ${offsetDistance})` : 'auto'}
     >
-        <div class="desktop-image">
+        <span class="desktop-image">
             <HoverImage src={hoverSrc} alt={hoverAlt}/>
-        </div>
-        <div class="mobile-image">
+        </span>
+        <span class="mobile-image">
             <HoverImage src={hoverSrc} alt={hoverAlt} width={mobileWidth} height={mobileHeight}/>
-        </div>
-    </div>
+        </span>
+    </span>
 </span>
 
 <style>
@@ -127,6 +127,11 @@
 
     .hover-preview.visible {
         opacity: 1;
+    }
+
+    .desktop-image,
+    .mobile-image {
+        display: inline-block;
     }
 
     .mobile-image {
