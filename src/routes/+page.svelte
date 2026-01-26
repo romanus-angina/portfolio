@@ -15,7 +15,7 @@
     <div class="intro-text">
       
       <p>
-        I'm an ML/SWE focused on building systems that bridge machine learning and real-world applications.
+        I'm an Applied MLE focused on building systems that bridge machine learning and real-world applications.
       </p>
 
       <p>
