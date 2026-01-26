@@ -64,6 +64,8 @@ a:hover {
     padding: 1px 2px;
     margin: -1px -2px;
     border-radius: 2px;
+    text-decoration-thickness: 4px;
+    text-underline-offset: 5px;
 }
 
 a:visited {
