@@ -4,6 +4,7 @@
     --color-text: #1a1a1a;
     --color-text-muted: #555555;
     --color-link-underline: #84161f;
+    --color-image: #a31b27;
 
     /* Spacing */
     --space-xs: 0.25rem;
@@ -25,6 +26,7 @@
     --color-text: #f0f0f0;
     --color-text-muted: #999999;
     --color-link-underline: #167a45;
+    --color-image: #6ae4a3;
 }
 
 *, *::before, *::after {
