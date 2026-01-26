@@ -67,7 +67,7 @@
       </p>
 
       <p>
-        Originally from Nairobi. I run 5Ks, have somehow met two of Kenya's presidents, and play guitar, bass, and drums (not simultaneously, unfortunately).
+        Originally from Nairobi, Kenya. I run 5Ks, have somehow met two of Kenya's presidents, and play guitar, bass, and drums (not simultaneously, unfortunately).
       </p>
 
       <p>
