@@ -1,5 +1,5 @@
 <script lang="ts">
-  import HoverLink from "$lib/components/HoverLink.svelte";
+  import { HoverLink } from "$lib/components/HoverLink.svelte";
   import LinkWithImage from "$lib/components/LinkWithImage.svelte";
   import { onMount } from 'svelte';
 
@@ -75,7 +75,7 @@
       </p>
 
       <p>
-        Originally from Nairobi, Kenya. I run 5Ks, have met two of Kenya's presidents, Kenya's ambassador to the United States, & two congressmen, and play three instruments: guitar, bass, and piano (not simultaneously, unfortunately).
+        Originally from Nairobi, Kenya. I run 5Ks. I have met two of Kenya's presidents, Kenya's ambassador to the United States, & two congressmen. And, I play three instruments: guitar, bass, and piano (not simultaneously, unfortunately).
       </p>
 
       <p>
