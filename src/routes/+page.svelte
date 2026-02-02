@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { HoverLink } from "$lib/components/HoverLink.svelte";
+  import HoverLink from "$lib/components/HoverLink.svelte";
   import LinkWithImage from "$lib/components/LinkWithImage.svelte";
   import { onMount } from 'svelte';
 
