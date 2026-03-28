@@ -79,7 +79,7 @@
       </p>
 
       <p>
-        If you're building something interesting or just want to chat, <HoverLink href="https://mail.google.com/mail/?view=cm&fs=1&to=sra12@rice.edu" hoverSrc="/images/hover/schneider_hypnosis_dithered.webp" hoverPosition="right" external={true}>reach out</HoverLink>
+        If you're building something interesting or want to chat, <HoverLink href="https://mail.google.com/mail/?view=cm&fs=1&to=sra12@rice.edu" hoverSrc="/images/hover/schneider_hypnosis_dithered.webp" hoverPosition="right" external={true}>reach out</HoverLink> <span class="email-aside">(<span class="email-addr">sra12@rice.edu</span>)</span>
       </p>
     </div>
   </div>
@@ -123,13 +123,18 @@
     padding: 0 var(--space-md);
   }
 
-  .email-display {
-    font-family: var(--font-mono);
+  .email-aside {
     font-size: 0.9em;
-    color: var(--color-text-muted);
+    color: var(--color-link-underline);
+    font-weight: 1000;
+}
+
+.email-addr {
+    color: var(--color-text);
+    font-weight: 400;
+    padding: 0 4px;
     user-select: all;
-    cursor: text;
-  }
+}
 
   @media(hover: hover) {
     .contact {
