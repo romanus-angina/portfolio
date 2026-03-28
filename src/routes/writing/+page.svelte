@@ -1,5 +1,5 @@
 <script lang="ts">
-
+    import { posts } from '$lib/data/posts';
 </script>
 
 <svelte:head>
@@ -24,20 +24,55 @@
 
 <section class="writing">
     <h1>Writing</h1>
-    <p class="placeholder">Essays and thoughts on ML, engineering, and building things. Coming soon!</p>
+    <div class="post-list">
+        {#each posts as post}
+            <div class="post-item">
+                <span class="post-date">{post.date}</span>
+                <a href="/writing/{post.slug}" class="post-title">{post.title}</a>
+            </div>
+        {/each}
+    </div>
 </section>
 
 <style>
-
-    .writing h1{
+    .writing h1 {
         font-size: 2.4rem;
         margin-bottom: var(--space-sm);
     }
 
-    .placeholder {
+    .post-list {
         border-top: 1px solid var(--color-text-muted);
-        padding: var(--space-md) 0;
-        font-style: italic;
+        padding-top: var(--space-md);
+    }
+
+    .post-item {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-md);
+    padding: var(--space-sm) 0;
+}
+
+.post-title {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+    .post-date {
+        font-size: 0.8rem;
         color: var(--color-text-muted);
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .post-title {
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+
+    @media (max-width: 480px) {
+        .post-item {
+            flex-direction: column;
+            gap: var(--space-xs);
+        }
     }
 </style>
