@@ -70,7 +70,7 @@
       </p>
 
       <p>
-        Previously, I built full-stack AI systems at a stealth health-tech startup (production RAG pipelines, ML infrastructure) and 
+        I am a <HoverLink href="https://developer.apple.com/wwdc26/" hoverSrc="/images/hover/rene_magritte_son_of_man_dithered.png" hoverPosition="left" external={true}> WWDC26 Scholar</HoverLink>. Previously, I built full-stack AI systems at a stealth health-tech startup (production RAG pipelines, ML infrastructure) and 
         AI implementations for businesses in Houston at <HoverLink href="https://www.linkedin.com/company/agentic-ai-services" hoverSrc="/images/hover/clausen_our_blacksmith_dithered.webp" external={true}>Agentic AI Services</HoverLink>.
       </p>
 
@@ -79,7 +79,7 @@
       </p>
 
       <p>
-        If you're building something interesting or just want to chat, <HoverLink href="https://mail.google.com/mail/?view=cm&fs=1&to=sra12@rice.edu" hoverSrc="/images/hover/schneider_hypnosis_dithered.webp" hoverPosition="right" external={true}>reach out.</HoverLink>
+        If you're building something interesting or just want to chat, <HoverLink href="https://mail.google.com/mail/?view=cm&fs=1&to=sra12@rice.edu" hoverSrc="/images/hover/schneider_hypnosis_dithered.webp" hoverPosition="right" external={true}>reach out</HoverLink>
       </p>
     </div>
   </div>
@@ -121,6 +121,14 @@
 
   .contact{
     padding: 0 var(--space-md);
+  }
+
+  .email-display {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    color: var(--color-text-muted);
+    user-select: all;
+    cursor: text;
   }
 
   @media(hover: hover) {
