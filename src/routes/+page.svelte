@@ -123,19 +123,6 @@
     padding: 0 var(--space-md);
   }
 
-  .email-aside {
-    font-size: 0.9em;
-    color: var(--color-link-underline);
-    font-weight: 1000;
-}
-
-.email-addr {
-    color: var(--color-text);
-    font-weight: 400;
-    padding: 0 4px;
-    user-select: all;
-}
-
   @media(hover: hover) {
     .contact {
       padding-bottom: 8rem;
