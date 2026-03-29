@@ -77,7 +77,7 @@
 
     <p>
         I want to discuss why that occurs, why AI continues to produce it, 
-        and what the first-principles alternative looks like.
+        and what the alternative looks like when you reason from what Aristotle called archai, first principles. <a href="#fn1" class="footnote-ref" aria-label="Footnote 1">1</a>
     </p>
 
     <h2>What mailto: Actually Is</h2>
@@ -90,7 +90,7 @@
         <a href="https://datatracker.ietf.org/doc/html/rfc2368" target="_blank" rel="noopener noreferrer">RFC 2368</a>
         (July 1998), and received its final revision in
         <a href="https://datatracker.ietf.org/doc/html/rfc6068" target="_blank" rel="noopener noreferrer">RFC 6068</a>
-        (October 2010).<a href="#fn1" class="footnote-ref" aria-label="Footnote 1">1</a>
+        (October 2010).<a href="#fn2" class="footnote-ref" aria-label="Footnote 2">2</a>
     </p>
 
     <p>
@@ -98,8 +98,9 @@
     </p>
 
     <div class="code-block"><span class="tag">&lt;a</span> <span class="attr">href</span>=<span class="string">"mailto:you@example.com?subject=Quick%20Question&amp;body=Hey%2C%20I%20saw%20your%20site..."</span><span class="tag">&gt;</span>
-  Email us
-<span class="tag">&lt;/a&gt;</span></div>
+        Email us
+        <span class="tag">&lt;/a&gt;</span>
+    </div>
 
     <p>
         An anchor tag can contain basically an entire email draft.
@@ -141,7 +142,7 @@
         pick a different app from the dropdown. Except the Settings menu is greyed
         out unless you have already configured an email account in Mail. To tell
         macOS you do not want to use Apple Mail, you first have to set up Apple
-        Mail.<a href="#fn2" class="footnote-ref" aria-label="Footnote 2">2</a> The
+        Mail.<a href="#fn3" class="footnote-ref" aria-label="Footnote 3">3</a> The
         terminal workaround that power users relied on
         (<code>LSSetDefaultHandlerForURLScheme</code>) was deprecated in macOS 14.2.
         This has not changed through Sequoia or Tahoe. 
@@ -170,7 +171,7 @@
         recognizes the fact that mailto
         constructs can be located within HTML pages by automated means (even bcc'ed ones) and that
         addresses harvested this way are likely to end up on spam lists. The spec even acknowledges 
-        that sophisticated bots can get around obfuscation, which is a mentioned defence.<a href="#fn3" class="footnote-ref" aria-label="Footnote 3">3</a>
+        that sophisticated bots can get around obfuscation, which is a mentioned defence.<a href="#fn4" class="footnote-ref" aria-label="Footnote 4">4</a>
         An RFC hedging against a flaw in its pretty noteworthy.
     </p>
 
@@ -262,26 +263,35 @@
     </p>
 
     <div class="footnotes">
-        <p id="fn1">
+    <p id="fn1">
             <span class="fn-num">1.</span>
+            Aristotle, <em>Physics</em> I.1 (184a10): "We do not think that we know a thing
+            until we are acquainted with its primary conditions or first principles, and
+            have carried our analysis as far as its simplest elements." The term
+            <em>archai</em> recurs throughout the <em>Metaphysics</em> (981b28) as the
+            starting points from which all other knowledge is derived.
+        </p>
+        <p id="fn2">
+            <span class="fn-num">2.</span>
             RFC 1738 defined the basic <code>mailto:</code> syntax. RFC 2368 added
             query parameters for subject, body, CC, and BCC. RFC 6068, the current
             standard, added internationalization and IRI compatibility. Jamie Zawinski
             is a named author on both RFC 2368 and RFC 6068.
         </p>
-        <p id="fn2">
-            <span class="fn-num">2.</span>
+        <p id="fn3">
+            <span class="fn-num">3.</span>
             <code>LSSetDefaultHandlerForURLScheme</code> in Apple's LaunchServices
             framework was deprecated in macOS 14.2.1 (Sonoma). As of Tahoe 26.0, the
             only supported method is Mail.app's Settings panel, which requires an
             active account configured in Mail. This Catch-22 has persisted unchanged
             since at least macOS Ventura.
         </p>
-        <p id="fn3">
-            <span class="fn-num">3.</span>
+        <p id="fn4">
+            <span class="fn-num">4.</span>
             See Section 7 ("Security Considerations") of
             <a href="https://datatracker.ietf.org/doc/html/rfc6068#section-8" target="_blank" rel="noopener noreferrer">RFC 6068</a>.
         </p>
+        
         
     </div>
 </article>
