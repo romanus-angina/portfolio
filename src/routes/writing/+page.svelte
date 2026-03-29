@@ -1,5 +1,6 @@
 <script lang="ts">
     import { posts } from '$lib/data/posts';
+    import HoverLink from '$lib/components/HoverLink.svelte';
 </script>
 
 <svelte:head>
@@ -28,7 +29,13 @@
         {#each posts as post}
             <div class="post-item">
                 <span class="post-date">{post.date}</span>
-                <a href="/writing/{post.slug}" class="post-title">{post.title}</a>
+                <HoverLink 
+                    href="/writing/{post.slug}" 
+                    hoverSrc="/images/hover/writing/vermeer_a_lady_writing_dithered.png"
+                    hoverPosition="right"
+                >
+                    {post.title}
+                </HoverLink>
             </div>
         {/each}
     </div>
