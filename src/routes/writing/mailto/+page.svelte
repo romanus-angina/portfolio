@@ -14,16 +14,18 @@
 
     <!-- Open Graph -->
     <meta property="og:type" content="article" />
-    <meta property="og:url" content={url} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
+    <meta property="og:title" content="mailto: is confirmed MID" />
+    <meta property="og:description" content="The mailto: URI scheme silently fails for most users. A decision tree of dead ends." />
+    <meta property="og:image" content="https://romanusangina.com/og/mailto.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:url" content="https://romanusangina.com/writing/mailto" />
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary" />
-    <meta property="twitter:url" content={url} />
-    <meta property="twitter:title" content={title} />
-    <meta property="twitter:description" content={description} />
-    <meta name="twitter:creator" content="@rxmxnvs" />
+    <!-- Twitter/X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="mailto: is confirmed MID" />
+    <meta name="twitter:description" content="The mailto: URI scheme silently fails for most users. A decision tree of dead ends." />
+    <meta name="twitter:image" content="https://romanusangina.com/og/mailto.png" />
 
     <!-- Canonical URL -->
     <link rel="canonical" href={url} />
