@@ -163,7 +163,7 @@
         Another problem with <code>mailto:</code> links is that they publish your email
         address in the DOM in a format specifically designed to be machine-readable.
         The href says <code>mailto:you@example.com</code>. Bots have been harvesting
-        these with trivial regex(es?) since the late '90s.
+        these with trivial regex(es?i?) since the late '90s.
     </p>
 
     <p>
